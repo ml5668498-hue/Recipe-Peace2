@@ -5,7 +5,8 @@
  * Recetario de la Paz API
  * OpenAPI spec version: 0.1.0
  */
+import type { Recipe } from './recipe';
 
-export interface HealthStatus {
-  status: string;
+export interface RecipeList {
+  recipes: Recipe[];
 }

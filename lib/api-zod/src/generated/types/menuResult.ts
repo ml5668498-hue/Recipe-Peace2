@@ -5,7 +5,8 @@
  * Recetario de la Paz API
  * OpenAPI spec version: 0.1.0
  */
+import type { DayMenu } from './dayMenu';
 
-export interface HealthStatus {
-  status: string;
+export interface MenuResult {
+  days: DayMenu[];
 }

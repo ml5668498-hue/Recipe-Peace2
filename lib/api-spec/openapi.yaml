@@ -1,22 +1,26 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Recetario de la Paz API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: recipes
+    description: Recipe generation
+  - name: menu
+    description: Anti-anxiety menu generation
+  - name: planner
+    description: Family healthy planner
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +28,100 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /recipes/generate:
+    post:
+      operationId: generateRecipes
+      tags: [recipes]
+      summary: Generate 3 recipes from available ingredients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeInput"
+      responses:
+        "200":
+          description: Generated recipes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeList"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /menu/generate:
+    post:
+      operationId: generateMenu
+      tags: [menu]
+      summary: Generate anti-anxiety menu for a day or week
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuInput"
+      responses:
+        "200":
+          description: Generated menu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /planner/generate:
+    post:
+      operationId: generatePlanner
+      tags: [planner]
+      summary: Generate weekly family healthy planner with shopping list and savings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlannerInput"
+      responses:
+        "200":
+          description: Generated weekly planner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlannerResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +132,205 @@ components:
       required:
         - status
 
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Recipe:
+      type: object
+      properties:
+        name:
+          type: string
+        usedIngredients:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
+        estimatedTime:
+          type: string
+        difficulty:
+          type: string
+          enum: [Fácil, Medio, Difícil]
+        antiAnxietyTip:
+          type: string
+      required:
+        - name
+        - usedIngredients
+        - steps
+        - estimatedTime
+        - difficulty
+        - antiAnxietyTip
+
+    RecipeInput:
+      type: object
+      properties:
+        ingredients:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+        - ingredients
+
+    RecipeList:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recipe"
+      required:
+        - recipes
+
+    Meal:
+      type: object
+      properties:
+        name:
+          type: string
+        mainIngredients:
+          type: array
+          items:
+            type: string
+        estimatedTime:
+          type: string
+        difficulty:
+          type: string
+          enum: [Fácil, Medio, Difícil]
+        calmMessage:
+          type: string
+      required:
+        - name
+        - mainIngredients
+        - estimatedTime
+        - difficulty
+        - calmMessage
+
+    DayMenu:
+      type: object
+      properties:
+        dayLabel:
+          type: ["string", "null"]
+        breakfast:
+          $ref: "#/components/schemas/Meal"
+        lunch:
+          $ref: "#/components/schemas/Meal"
+        snack:
+          $ref: "#/components/schemas/Meal"
+        dinner:
+          $ref: "#/components/schemas/Meal"
+        optionalSnack:
+          $ref: "#/components/schemas/Meal"
+      required:
+        - breakfast
+        - lunch
+        - snack
+        - dinner
+        - optionalSnack
+
+    MenuInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [day, week]
+        quickOption:
+          type: ["string", "null"]
+          enum: ["10min", "20min", "economico", "familiar", null]
+      required:
+        - type
+
+    MenuResult:
+      type: object
+      properties:
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayMenu"
+      required:
+        - days
+
+    PlannerMeal:
+      type: object
+      properties:
+        name:
+          type: string
+        estimatedTime:
+          type: string
+        difficulty:
+          type: string
+          enum: [Fácil, Medio, Difícil]
+        tags:
+          type: array
+          items:
+            type: string
+            enum: [económica, rápida, familiar]
+      required:
+        - name
+        - estimatedTime
+        - difficulty
+        - tags
+
+    DayPlanner:
+      type: object
+      properties:
+        day:
+          type: string
+        breakfast:
+          $ref: "#/components/schemas/PlannerMeal"
+        lunch:
+          $ref: "#/components/schemas/PlannerMeal"
+        snack:
+          $ref: "#/components/schemas/PlannerMeal"
+        dinner:
+          $ref: "#/components/schemas/PlannerMeal"
+      required:
+        - day
+        - breakfast
+        - lunch
+        - snack
+        - dinner
+
+    ShoppingCategory:
+      type: object
+      properties:
+        category:
+          type: string
+        items:
+          type: array
+          items:
+            type: string
+      required:
+        - category
+        - items
+
+    PlannerInput:
+      type: object
+      properties:
+        preferences:
+          type: ["string", "null"]
+      required: []
+
+    PlannerResult:
+      type: object
+      properties:
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlanner"
+        shoppingList:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShoppingCategory"
+        weeklySavingsMessage:
+          type: string
+      required:
+        - days
+        - shoppingList
+        - weeklySavingsMessage
