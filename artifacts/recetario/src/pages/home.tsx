@@ -39,15 +39,25 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="mb-8 text-center flex flex-col items-center"
+          className="mb-8 flex flex-col items-center"
         >
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
-            <Heart size={32} strokeWidth={1.5} />
+          {/* Premium badge — top right of icon */}
+          <div className="relative mb-4">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+              <Heart size={32} strokeWidth={1.5} />
+            </div>
+            <Link href="/premium">
+              <span className="absolute -top-1 -right-2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-sm">
+                <Sparkles size={9} strokeWidth={2.5} />
+                Premium
+              </span>
+            </Link>
           </div>
-          <h1 className="text-4xl font-serif font-medium text-foreground tracking-tight mb-3">
+
+          <h1 className="text-4xl font-serif font-medium text-foreground tracking-tight mb-3 text-center">
             Recetario de la Paz
           </h1>
-          <p className="text-lg text-muted-foreground font-sans leading-relaxed max-w-[280px]">
+          <p className="text-lg text-muted-foreground font-sans leading-relaxed max-w-[280px] text-center">
             Un espacio tranquilo para cocinar sin prisa y nutrirte con calma.
           </p>
         </motion.div>
@@ -89,10 +99,12 @@ export default function Home() {
                   <p className="text-sm text-foreground/80 leading-relaxed mb-3">
                     Estás usando recetas de nuestra base interna. Con IA personalizada, las recetas y menús se crean especialmente para vos.
                   </p>
-                  <button className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 transition-colors px-4 py-2 rounded-xl border border-primary/20">
-                    <Lock size={14} strokeWidth={2} />
-                    Desbloquear IA personalizada
-                  </button>
+                  <Link href="/premium">
+                    <button className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 transition-colors px-4 py-2 rounded-xl border border-primary/20">
+                      <Lock size={14} strokeWidth={2} />
+                      Desbloquear IA personalizada
+                    </button>
+                  </Link>
                 </>
               )}
             </div>
@@ -160,7 +172,7 @@ export default function Home() {
               <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30 flex gap-5 items-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-105 transition-transform relative">
                   <BookHeart size={24} strokeWidth={1.5} />
-                  {(entries.length > 0) && (
+                  {entries.length > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                       {entries.length > 9 ? "9+" : entries.length}
                     </span>

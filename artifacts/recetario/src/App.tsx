@@ -10,6 +10,7 @@ import Menu from "@/pages/menu";
 import Planner from "@/pages/planner";
 import MyRecetario from "@/pages/my-recetario";
 import Welcome from "@/pages/welcome";
+import Premium from "@/pages/premium";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/menu" component={Menu} />
       <Route path="/planner" component={Planner} />
       <Route path="/mi-recetario" component={MyRecetario} />
+      <Route path="/premium" component={Premium} />
       <Route component={NotFound} />
     </Switch>
   );
