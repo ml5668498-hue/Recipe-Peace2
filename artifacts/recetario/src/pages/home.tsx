@@ -1,9 +1,24 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { Utensils, CalendarDays, ShoppingBag, Heart, Sparkles, Lock } from "lucide-react";
+import { Utensils, CalendarDays, ShoppingBag, Heart, Sparkles, Lock, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+
+async function fetchPlanMode(): Promise<{ mode: "free" | "premium" }> {
+  const res = await fetch("/api/plan");
+  if (!res.ok) return { mode: "free" };
+  return res.json();
+}
 
 export default function Home() {
+  const { data: plan } = useQuery({
+    queryKey: ["plan-mode"],
+    queryFn: fetchPlanMode,
+    staleTime: 60_000,
+  });
+
+  const isPremium = plan?.mode === "premium";
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -42,33 +57,64 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Free / Premium mode banner */}
+        {/* Plan mode banner */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className="mb-6 rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm"
-          data-testid="plan-banner"
+          className={`mb-6 rounded-2xl border overflow-hidden shadow-sm ${
+            isPremium
+              ? "border-primary/30 bg-primary/5"
+              : "border-border/60 bg-card"
+          }`}
         >
-          <div className="flex items-center gap-3 px-5 py-3 bg-secondary/20 border-b border-border/40">
-            <div className="w-2 h-2 rounded-full bg-secondary-foreground/40" />
-            <span className="text-sm font-medium text-foreground/70">Modo gratis activo</span>
+          {/* Banner header strip */}
+          <div
+            className={`flex items-center gap-3 px-5 py-3 border-b ${
+              isPremium
+                ? "bg-primary/10 border-primary/20"
+                : "bg-secondary/20 border-border/40"
+            }`}
+          >
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isPremium ? "bg-primary" : "bg-muted-foreground/40"
+              }`}
+            />
+            <span className="text-sm font-medium text-foreground/70">
+              {isPremium ? "IA personalizada activa" : "Modo gratis activo"}
+            </span>
           </div>
+
+          {/* Banner body */}
           <div className="px-5 py-4 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 mt-0.5">
-              <Sparkles size={18} strokeWidth={1.5} />
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                isPremium ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
+              }`}
+            >
+              {isPremium ? (
+                <Zap size={18} strokeWidth={1.5} />
+              ) : (
+                <Sparkles size={18} strokeWidth={1.5} />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-                Estás usando recetas de nuestra base interna. Con IA personalizada, las recetas y menús se crean especialmente para vos.
-              </p>
-              <button
-                data-testid="button-unlock-premium"
-                className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 transition-colors px-4 py-2 rounded-xl border border-primary/20"
-              >
-                <Lock size={14} strokeWidth={2} />
-                Desbloquear IA personalizada
-              </button>
+              {isPremium ? (
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  Groq IA genera recetas, menús y planners personalizados para vos en segundos.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-foreground/80 leading-relaxed mb-3">
+                    Estás usando recetas de nuestra base interna. Con IA personalizada, las recetas y menús se crean especialmente para vos.
+                  </p>
+                  <button className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 transition-colors px-4 py-2 rounded-xl border border-primary/20">
+                    <Lock size={14} strokeWidth={2} />
+                    Desbloquear IA personalizada
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </motion.div>
@@ -81,7 +127,7 @@ export default function Home() {
           className="flex flex-col gap-4"
         >
           <motion.div variants={itemVariants}>
-            <Link href="/recetas" className="block group" data-testid="link-recipes">
+            <Link href="/recetas" className="block group">
               <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30 flex gap-5 items-center">
                 <div className="w-12 h-12 rounded-full bg-secondary/30 flex items-center justify-center text-secondary-foreground shrink-0 group-hover:scale-105 transition-transform">
                   <Utensils size={24} strokeWidth={1.5} />
@@ -99,7 +145,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <Link href="/menu" className="block group" data-testid="link-menu">
+            <Link href="/menu" className="block group">
               <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30 flex gap-5 items-center">
                 <div className="w-12 h-12 rounded-full bg-accent/40 flex items-center justify-center text-accent-foreground shrink-0 group-hover:scale-105 transition-transform">
                   <CalendarDays size={24} strokeWidth={1.5} />
@@ -117,7 +163,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <Link href="/planner" className="block group" data-testid="link-planner">
+            <Link href="/planner" className="block group">
               <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30 flex gap-5 items-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-105 transition-transform">
                   <ShoppingBag size={24} strokeWidth={1.5} />
