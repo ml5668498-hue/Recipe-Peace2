@@ -1,19 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGeneratePlanner } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
-import { Loader2, ListTodo, ShoppingBag, PiggyBank, Clock, ChefHat } from "lucide-react";
+import { Loader2, ListTodo, ShoppingBag, PiggyBank, Clock, ChefHat, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useRecetario } from "@/hooks/use-recetario";
 
 export default function Planner() {
   const [preferences, setPreferences] = useState("");
+  const [savedId, setSavedId] = useState<string | null>(null);
+
   const generatePlanner = useGeneratePlanner();
+  const { addPlanner, toggleFavorite, entries } = useRecetario();
+
+  const prevSuccess = useRef(false);
+
+  // Auto-save to history on new generation
+  useEffect(() => {
+    if (generatePlanner.isSuccess && generatePlanner.data && !prevSuccess.current) {
+      const id = addPlanner(generatePlanner.data as any);
+      setSavedId(id);
+      prevSuccess.current = true;
+    }
+    if (!generatePlanner.isSuccess) {
+      prevSuccess.current = false;
+    }
+  }, [generatePlanner.isSuccess, generatePlanner.data, addPlanner]);
 
   const handleGenerate = () => {
+    setSavedId(null);
     generatePlanner.mutate({ data: { preferences: preferences || undefined } });
   };
+
+  const isFav = savedId ? (entries.find((e) => e.id === savedId)?.isFavorite ?? false) : false;
 
   return (
     <Layout title="Planner Familiar">
@@ -25,8 +46,8 @@ export default function Planner() {
 
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">Preferencias especiales (Opcional)</p>
-            <Input 
-              placeholder="Ej. sin lácteos, mucha verdura, económico..." 
+            <Input
+              placeholder="Ej. sin lácteos, mucha verdura, económico..."
               value={preferences}
               onChange={(e) => setPreferences(e.target.value)}
               className="h-12 rounded-xl border-border/60 bg-card focus-visible:ring-primary/50 text-base"
@@ -51,13 +72,30 @@ export default function Planner() {
 
         <div className="flex-1 pb-10">
           {generatePlanner.isSuccess && generatePlanner.data && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex flex-col gap-10"
             >
+              {/* Save button */}
+              {savedId && (
+                <motion.button
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => toggleFavorite(savedId)}
+                  className={`self-end flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl border transition-colors ${
+                    isFav
+                      ? "bg-primary/10 text-primary border-primary/20"
+                      : "bg-card text-muted-foreground border-border/60 hover:text-primary hover:border-primary/20"
+                  }`}
+                >
+                  <Star size={15} className={isFav ? "fill-primary" : ""} />
+                  {isFav ? "Guardado en favoritos" : "Guardar planner"}
+                </motion.button>
+              )}
+
               {/* Savings Message */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-accent/30 border border-accent/50 rounded-2xl p-5 flex gap-4 items-center"
@@ -76,15 +114,17 @@ export default function Planner() {
                   <ShoppingBag size={22} className="text-primary" />
                   <h3 className="font-serif text-xl font-medium text-foreground">Lista de compras</h3>
                 </div>
-                
+
                 <div className="space-y-6">
                   {generatePlanner.data.shoppingList.map((cat, i) => (
                     <div key={i}>
-                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">{cat.category}</h4>
+                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                        {cat.category}
+                      </h4>
                       <ul className="space-y-2">
                         {cat.items.map((item, j) => (
                           <li key={j} className="flex items-start gap-3">
-                            <div className="w-5 h-5 rounded-full border border-border/80 shrink-0 mt-0.5 flex items-center justify-center"></div>
+                            <div className="w-5 h-5 rounded-full border border-border/80 shrink-0 mt-0.5 flex items-center justify-center" />
                             <span className="text-[15px] text-foreground/90">{item}</span>
                           </li>
                         ))}
@@ -100,27 +140,46 @@ export default function Planner() {
                 <div className="space-y-8">
                   {generatePlanner.data.days.map((day, dayIndex) => (
                     <div key={dayIndex}>
-                      <h4 className="font-medium text-lg text-foreground mb-4 sticky top-16 bg-background/95 backdrop-blur py-2 z-10">{day.day}</h4>
+                      <h4 className="font-medium text-lg text-foreground mb-4 sticky top-16 bg-background/95 backdrop-blur py-2 z-10">
+                        {day.day}
+                      </h4>
                       <div className="grid gap-3">
                         {[
                           { label: "Desayuno", meal: day.breakfast },
                           { label: "Almuerzo", meal: day.lunch },
                           { label: "Merienda", meal: day.snack },
-                          { label: "Cena", meal: day.dinner }
+                          { label: "Cena", meal: day.dinner },
                         ].map(({ label, meal }, mealIndex) => (
-                          <div key={mealIndex} className="bg-card rounded-xl p-4 border border-border/60 shadow-sm">
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
-                            <h5 className="font-serif text-[17px] font-medium text-foreground mb-2 leading-snug">{meal.name}</h5>
-                            
+                          <div
+                            key={mealIndex}
+                            className="bg-card rounded-xl p-4 border border-border/60 shadow-sm"
+                          >
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                              {label}
+                            </p>
+                            <h5 className="font-serif text-[17px] font-medium text-foreground mb-2 leading-snug">
+                              {meal.name}
+                            </h5>
+
                             <div className="flex flex-wrap gap-2 mt-3">
-                              <Badge variant="secondary" className="bg-secondary/20 text-secondary-foreground hover:bg-secondary/30 font-normal rounded-md px-2 py-0.5 border-none text-xs flex gap-1 items-center">
+                              <Badge
+                                variant="secondary"
+                                className="bg-secondary/20 text-secondary-foreground hover:bg-secondary/30 font-normal rounded-md px-2 py-0.5 border-none text-xs flex gap-1 items-center"
+                              >
                                 <Clock size={10} /> {meal.estimatedTime}
                               </Badge>
-                              <Badge variant="outline" className="font-normal rounded-md px-2 py-0.5 border-border/60 text-xs flex gap-1 items-center">
+                              <Badge
+                                variant="outline"
+                                className="font-normal rounded-md px-2 py-0.5 border-border/60 text-xs flex gap-1 items-center"
+                              >
                                 <ChefHat size={10} className="opacity-70" /> {meal.difficulty}
                               </Badge>
                               {meal.tags.map((tag, t) => (
-                                <Badge key={t} variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 font-normal rounded-md px-2 py-0.5 border-none text-xs">
+                                <Badge
+                                  key={t}
+                                  variant="secondary"
+                                  className="bg-primary/10 text-primary hover:bg-primary/20 font-normal rounded-md px-2 py-0.5 border-none text-xs"
+                                >
                                   {tag}
                                 </Badge>
                               ))}

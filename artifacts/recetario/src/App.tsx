@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Recipes from "@/pages/recipes";
 import Menu from "@/pages/menu";
 import Planner from "@/pages/planner";
+import MyRecetario from "@/pages/my-recetario";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/recetas" component={Recipes} />
       <Route path="/menu" component={Menu} />
       <Route path="/planner" component={Planner} />
+      <Route path="/mi-recetario" component={MyRecetario} />
       <Route component={NotFound} />
     </Switch>
   );

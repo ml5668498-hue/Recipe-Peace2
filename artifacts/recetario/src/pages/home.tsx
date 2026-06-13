@@ -1,8 +1,9 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { Utensils, CalendarDays, ShoppingBag, Heart, Sparkles, Lock, Zap } from "lucide-react";
+import { Utensils, CalendarDays, ShoppingBag, Heart, Sparkles, Lock, Zap, BookHeart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { useRecetario } from "@/hooks/use-recetario";
 
 async function fetchPlanMode(): Promise<{ mode: "free" | "premium" }> {
   const res = await fetch("/api/plan");
@@ -17,23 +18,17 @@ export default function Home() {
     staleTime: 60_000,
   });
 
+  const { favorites, entries } = useRecetario();
   const isPremium = plan?.mode === "premium";
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15 },
-    },
+    show: { opacity: 1, transition: { staggerChildren: 0.12 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 },
-    },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
   };
 
   return (
@@ -63,41 +58,26 @@ export default function Home() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
           className={`mb-6 rounded-2xl border overflow-hidden shadow-sm ${
-            isPremium
-              ? "border-primary/30 bg-primary/5"
-              : "border-border/60 bg-card"
+            isPremium ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card"
           }`}
         >
-          {/* Banner header strip */}
           <div
             className={`flex items-center gap-3 px-5 py-3 border-b ${
-              isPremium
-                ? "bg-primary/10 border-primary/20"
-                : "bg-secondary/20 border-border/40"
+              isPremium ? "bg-primary/10 border-primary/20" : "bg-secondary/20 border-border/40"
             }`}
           >
-            <div
-              className={`w-2 h-2 rounded-full ${
-                isPremium ? "bg-primary" : "bg-muted-foreground/40"
-              }`}
-            />
+            <div className={`w-2 h-2 rounded-full ${isPremium ? "bg-primary" : "bg-muted-foreground/40"}`} />
             <span className="text-sm font-medium text-foreground/70">
               {isPremium ? "IA personalizada activa" : "Modo gratis activo"}
             </span>
           </div>
-
-          {/* Banner body */}
           <div className="px-5 py-4 flex items-start gap-4">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                 isPremium ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
               }`}
             >
-              {isPremium ? (
-                <Zap size={18} strokeWidth={1.5} />
-              ) : (
-                <Sparkles size={18} strokeWidth={1.5} />
-              )}
+              {isPremium ? <Zap size={18} strokeWidth={1.5} /> : <Sparkles size={18} strokeWidth={1.5} />}
             </div>
             <div className="flex-1 min-w-0">
               {isPremium ? (
@@ -133,9 +113,7 @@ export default function Home() {
                   <Utensils size={24} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">
-                    ¿Qué cocino hoy?
-                  </h2>
+                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">¿Qué cocino hoy?</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Dinos qué ingredientes tienes y te sugerimos recetas fáciles y reconfortantes.
                   </p>
@@ -151,9 +129,7 @@ export default function Home() {
                   <CalendarDays size={24} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">
-                    Menú Anti Ansiedad
-                  </h2>
+                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">Menú Anti Ansiedad</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Menús diarios o semanales pensados para quitarte el estrés de decidir.
                   </p>
@@ -169,11 +145,33 @@ export default function Home() {
                   <ShoppingBag size={24} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">
-                    Planner Familiar
-                  </h2>
+                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">Planner Familiar</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Organiza la semana entera, ahorra dinero y lleva una lista de compras clara.
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+
+          {/* Mi Recetario */}
+          <motion.div variants={itemVariants}>
+            <Link href="/mi-recetario" className="block group">
+              <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30 flex gap-5 items-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-105 transition-transform relative">
+                  <BookHeart size={24} strokeWidth={1.5} />
+                  {(entries.length > 0) && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {entries.length > 9 ? "9+" : entries.length}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="font-serif text-xl font-medium text-foreground mb-1">Mi Recetario</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {favorites.length > 0
+                      ? `${favorites.length} favorito${favorites.length !== 1 ? "s" : ""} guardado${favorites.length !== 1 ? "s" : ""} · ${entries.length} en historial`
+                      : "Tus recetas, menús y planners favoritos guardados."}
                   </p>
                 </div>
               </div>
