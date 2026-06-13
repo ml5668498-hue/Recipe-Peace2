@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Recetario de la Paz"
+version = "1.0.0"
+id = "artifacts/recetario"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24592
+
+[services.development]
+run = "pnpm --filter @workspace/recetario run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/recetario", "run", "build" ]
+publicDir = "artifacts/recetario/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24592"
+BASE_PATH = "/"
