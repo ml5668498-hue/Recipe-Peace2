@@ -64,7 +64,7 @@ Reglas:
 - La lista de compras agrupa todos los ingredientes de la semana`;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "llama-3.1-8b-instant",
       max_tokens: 5000,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
