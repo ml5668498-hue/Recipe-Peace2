@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Heart, ChefHat, CalendarDays, ShoppingBag } from "lucide-react";
+import { ChefHat, CalendarDays, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RecetarioLogo } from "@/components/logo";
 
 const benefits = [
   {
@@ -33,8 +34,8 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="flex flex-col items-center text-center"
       >
-        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 text-primary">
-          <Heart size={40} strokeWidth={1.5} />
+        <div className="mb-6">
+          <RecetarioLogo size={88} />
         </div>
 
         <h1 className="text-4xl font-serif font-medium text-foreground tracking-tight mb-4 leading-tight">

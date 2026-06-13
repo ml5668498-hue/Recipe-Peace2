@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { Utensils, CalendarDays, ShoppingBag, Heart, Sparkles, Lock, Zap, BookHeart } from "lucide-react";
+import { Utensils, CalendarDays, ShoppingBag, Sparkles, Lock, Zap, BookHeart } from "lucide-react";
+import { RecetarioLogo } from "@/components/logo";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useRecetario } from "@/hooks/use-recetario";
@@ -43,9 +44,7 @@ export default function Home() {
         >
           {/* Premium badge — top right of icon */}
           <div className="relative mb-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-              <Heart size={32} strokeWidth={1.5} />
-            </div>
+            <RecetarioLogo size={72} />
             <Link href="/premium">
               <span className="absolute -top-1 -right-2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-sm">
                 <Sparkles size={9} strokeWidth={2.5} />
