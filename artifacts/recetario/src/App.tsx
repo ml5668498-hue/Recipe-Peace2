@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +9,7 @@ import Recipes from "@/pages/recipes";
 import Menu from "@/pages/menu";
 import Planner from "@/pages/planner";
 import MyRecetario from "@/pages/my-recetario";
+import Welcome from "@/pages/welcome";
 
 const queryClient = new QueryClient();
 
@@ -25,12 +27,25 @@ function Router() {
 }
 
 function App() {
+  const [welcomed, setWelcomed] = useState<boolean>(
+    () => localStorage.getItem("recetario_welcomed") === "true"
+  );
+
+  const handleWelcomeDone = () => {
+    localStorage.setItem("recetario_welcomed", "true");
+    setWelcomed(true);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        {!welcomed ? (
+          <Welcome onDone={handleWelcomeDone} />
+        ) : (
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+        )}
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
