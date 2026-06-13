@@ -1,0 +1,2 @@
+- [Groq via OpenAI SDK](groq-openai-sdk.md) — reuse openai package for Groq by swapping baseURL; no extra dependency needed
+- [Hybrid AI/fallback pattern](hybrid-fallback.md) — all 3 routes try Groq first, fall back to internal DB silently on missing key or error

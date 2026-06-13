@@ -1,0 +1,618 @@
+export interface InternalRecipe {
+  id: string;
+  name: string;
+  ingredients: string[];
+  mainIngredients: string[];
+  steps: string[];
+  estimatedTime: string;
+  difficulty: "Fácil" | "Medio" | "Difícil";
+  antiAnxietyTip: string;
+  calmMessage: string;
+  category: "desayuno" | "almuerzo" | "cena" | "merienda" | "snack";
+  tags: ("económica" | "rápida" | "familiar")[];
+}
+
+export const recipesDB: InternalRecipe[] = [
+  // ── DESAYUNOS ────────────────────────────────────────────────
+  {
+    id: "d1",
+    name: "Avena cremosa con banana y miel",
+    ingredients: ["avena", "banana", "miel", "leche", "canela"],
+    mainIngredients: ["avena", "banana", "miel"],
+    steps: [
+      "Calentar la leche en una olla a fuego medio.",
+      "Agregar la avena y revolver durante 5 minutos hasta que espese.",
+      "Cortar la banana en rodajas y colocar encima.",
+      "Añadir un chorrito de miel y una pizca de canela.",
+    ],
+    estimatedTime: "10 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Comer avena por la mañana ayuda a estabilizar el azúcar en sangre y reduce la ansiedad durante el día.",
+    calmMessage: "Un desayuno cálido es la mejor manera de comenzar el día con calma.",
+    category: "desayuno",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "d2",
+    name: "Tostadas con huevo revuelto",
+    ingredients: ["pan", "huevos", "sal", "aceite", "manteca"],
+    mainIngredients: ["pan", "huevos"],
+    steps: [
+      "Tostar las rebanadas de pan.",
+      "Batir los huevos con una pizca de sal.",
+      "Calentar un poco de aceite en la sartén y agregar los huevos.",
+      "Revolver suavemente a fuego bajo hasta que estén cremosos.",
+      "Servir sobre las tostadas.",
+    ],
+    estimatedTime: "10 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Los huevos son ricos en proteínas que te ayudan a sentirte saciado y con energía estable.",
+    calmMessage: "Un desayuno proteico te acompaña con calma toda la mañana.",
+    category: "desayuno",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "d3",
+    name: "Yogur con granola y frutas",
+    ingredients: ["yogur", "granola", "frutas", "miel"],
+    mainIngredients: ["yogur", "granola"],
+    steps: [
+      "Colocar el yogur en un bowl.",
+      "Agregar la granola por encima.",
+      "Añadir las frutas cortadas.",
+      "Rociar con un poco de miel.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "El yogur con probióticos cuida tu digestión, y una digestión saludable reduce la ansiedad.",
+    calmMessage: "Cinco minutos y un desayuno listo. No necesitas más para empezar bien.",
+    category: "desayuno",
+    tags: ["económica", "rápida"],
+  },
+  {
+    id: "d4",
+    name: "Licuado de banana con leche",
+    ingredients: ["banana", "leche", "azúcar", "vainilla"],
+    mainIngredients: ["banana", "leche"],
+    steps: [
+      "Pelar la banana y cortarla en trozos.",
+      "Colocar en la licuadora con la leche.",
+      "Agregar una cucharadita de azúcar y un chorrito de vainilla.",
+      "Licuar hasta que quede cremoso y servir.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "La banana contiene triptófano que ayuda a producir serotonina, la hormona del bienestar.",
+    calmMessage: "Rápido, dulce y nutritivo. A veces lo simple es exactamente lo que necesitas.",
+    category: "desayuno",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "d5",
+    name: "Tostadas con palta",
+    ingredients: ["pan", "palta", "limón", "sal", "aceite de oliva"],
+    mainIngredients: ["pan", "palta"],
+    steps: [
+      "Tostar el pan a tu gusto.",
+      "Aplasta la palta con un tenedor.",
+      "Condimentar con sal, unas gotas de limón y aceite de oliva.",
+      "Extender sobre las tostadas y servir.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Las grasas saludables de la palta nutren el cerebro y ayudan a regular el estado de ánimo.",
+    calmMessage: "Sencillo, nutritivo y delicioso. Ya es un logro prepararte un buen desayuno.",
+    category: "desayuno",
+    tags: ["rápida"],
+  },
+  {
+    id: "d6",
+    name: "Panquecas de avena y banana",
+    ingredients: ["avena", "banana", "huevo", "leche"],
+    mainIngredients: ["avena", "banana", "huevo"],
+    steps: [
+      "Pisar la banana y mezclarla con el huevo.",
+      "Agregar la avena molida y un chorrito de leche hasta obtener una mezcla.",
+      "Calentar una sartén antiadherente y volcar cucharadas de mezcla.",
+      "Cocinar 2 minutos de cada lado y servir con miel.",
+    ],
+    estimatedTime: "20 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Estas panquecas son sin gluten y su preparación es un momento de cuidado propio.",
+    calmMessage: "Cocinar para uno mismo es un acto de amor. Disfruta cada panqueca.",
+    category: "desayuno",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "d7",
+    name: "Huevos pochados con tostadas",
+    ingredients: ["huevos", "pan", "sal", "vinagre"],
+    mainIngredients: ["huevos", "pan"],
+    steps: [
+      "Hervir agua con un chorrito de vinagre.",
+      "Abrir el huevo en un vasito y deslizarlo suavemente al agua.",
+      "Cocinar 3 minutos para yema cremosa.",
+      "Tostar el pan y servir el huevo encima con sal.",
+    ],
+    estimatedTime: "15 minutos",
+    difficulty: "Medio",
+    antiAnxietyTip: "Tomarte el tiempo para hacer algo especial como esto te conecta con el momento presente.",
+    calmMessage: "Un desayuno elegante y sencillo para comenzar el día con intención.",
+    category: "desayuno",
+    tags: ["económica"],
+  },
+  {
+    id: "d8",
+    name: "Bowl de frutas con yogur y miel",
+    ingredients: ["frutas", "yogur", "miel", "nueces"],
+    mainIngredients: ["frutas", "yogur"],
+    steps: [
+      "Lavar y cortar las frutas en trozos.",
+      "Colocar en un bowl.",
+      "Agregar cucharadas de yogur.",
+      "Rociar con miel y decorar con nueces.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Las frutas aportan vitaminas que fortalecen tu sistema nervioso. Un color en el plato, una sonrisa en el día.",
+    calmMessage: "La naturaleza ya preparó este desayuno por ti. Solo es elegirlo.",
+    category: "desayuno",
+    tags: ["rápida", "familiar"],
+  },
+
+  // ── ALMUERZOS ────────────────────────────────────────────────
+  {
+    id: "a1",
+    name: "Arroz con pollo",
+    ingredients: ["arroz", "pollo", "cebolla", "ajo", "caldo", "aceite", "sal"],
+    mainIngredients: ["arroz", "pollo", "cebolla"],
+    steps: [
+      "Dorar el pollo cortado en trozos con aceite, sal y ajo.",
+      "Agregar la cebolla picada y rehogar 3 minutos.",
+      "Incorporar el arroz y el caldo caliente.",
+      "Cocinar a fuego bajo con la olla tapada por 20 minutos.",
+    ],
+    estimatedTime: "40 minutos",
+    difficulty: "Medio",
+    antiAnxietyTip: "El arroz con pollo es un abrazo en plato. La familiaridad de los sabores conocidos calma la mente.",
+    calmMessage: "Las recetas de siempre tienen ese poder mágico de hacernos sentir en casa.",
+    category: "almuerzo",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "a2",
+    name: "Fideos con salsa de tomate",
+    ingredients: ["fideos", "tomate", "ajo", "aceite", "sal", "albahaca"],
+    mainIngredients: ["fideos", "tomate"],
+    steps: [
+      "Hervir los fideos en agua con sal hasta que estén al dente.",
+      "En una sartén, dorar el ajo en aceite.",
+      "Agregar el tomate picado y cocinar 10 minutos.",
+      "Mezclar con los fideos escurridos y decorar con albahaca.",
+    ],
+    estimatedTime: "20 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Los carbohidratos del trigo producen serotonina. La pasta es literalmente reconfortante.",
+    calmMessage: "Un plato sencillo preparado con amor es siempre suficiente.",
+    category: "almuerzo",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "a3",
+    name: "Ensalada de atún con tomate",
+    ingredients: ["atún", "tomate", "lechuga", "cebolla", "aceite", "sal", "limón"],
+    mainIngredients: ["atún", "tomate", "lechuga"],
+    steps: [
+      "Cortar el tomate y la lechuga.",
+      "Picar la cebolla finamente.",
+      "Mezclar con el atún escurrido.",
+      "Condimentar con aceite, sal y limón.",
+    ],
+    estimatedTime: "10 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "El atún es rico en omega-3, que tiene efectos antiinflamatorios y reduce la ansiedad.",
+    calmMessage: "Fresco, rápido y lleno de nutrientes. Tu cuerpo lo agradece.",
+    category: "almuerzo",
+    tags: ["económica", "rápida"],
+  },
+  {
+    id: "a4",
+    name: "Lentejas guisadas con verduras",
+    ingredients: ["lentejas", "zanahoria", "cebolla", "ajo", "tomate", "caldo", "aceite"],
+    mainIngredients: ["lentejas", "zanahoria", "cebolla"],
+    steps: [
+      "Remojar las lentejas 30 minutos antes.",
+      "Rehogar la cebolla, el ajo y la zanahoria en aceite.",
+      "Agregar el tomate y cocinar 5 minutos.",
+      "Incorporar las lentejas y el caldo. Cocinar 25 minutos.",
+    ],
+    estimatedTime: "40 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Las lentejas son ricas en magnesio, un mineral clave para reducir el estrés y la ansiedad.",
+    calmMessage: "Un guiso nutritivo que te cuida por dentro. La cocina de abuela siempre tiene razón.",
+    category: "almuerzo",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "a5",
+    name: "Tortilla de papas española",
+    ingredients: ["papas", "huevos", "cebolla", "aceite", "sal"],
+    mainIngredients: ["papas", "huevos"],
+    steps: [
+      "Cortar las papas y la cebolla en rodajas finas.",
+      "Freír las papas en aceite hasta que estén tiernas.",
+      "Batir los huevos con sal y mezclar con las papas.",
+      "Cocinar en sartén, dar vuelta con un plato y terminar de cocinar.",
+    ],
+    estimatedTime: "30 minutos",
+    difficulty: "Medio",
+    antiAnxietyTip: "Hacer tortilla requiere atención plena. Es una meditación culinaria que te conecta con el presente.",
+    calmMessage: "La tortilla de papas es una de esas recetas que siempre tranquiliza.",
+    category: "almuerzo",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "a6",
+    name: "Omelette de queso y jamón",
+    ingredients: ["huevos", "queso", "jamón", "sal", "aceite"],
+    mainIngredients: ["huevos", "queso", "jamón"],
+    steps: [
+      "Batir los huevos con sal.",
+      "Calentar un poco de aceite en una sartén.",
+      "Verter los huevos y dejar que cuajen por los bordes.",
+      "Agregar el queso y jamón, doblar y servir.",
+    ],
+    estimatedTime: "10 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Un omelette tarda 10 minutos y aporta proteínas que te dan energía estable y sin picos.",
+    calmMessage: "Rápido, sabroso y nutritivo. A veces eso es todo lo que necesitas.",
+    category: "almuerzo",
+    tags: ["económica", "rápida"],
+  },
+  {
+    id: "a7",
+    name: "Sopa de verduras reconfortante",
+    ingredients: ["zanahoria", "papa", "cebolla", "caldo", "sal", "ajo"],
+    mainIngredients: ["zanahoria", "papa", "caldo"],
+    steps: [
+      "Pelar y cortar todas las verduras en cubos.",
+      "Rehogar la cebolla y el ajo en una olla.",
+      "Agregar las verduras y el caldo caliente.",
+      "Cocinar 25 minutos hasta que todo esté tierno.",
+    ],
+    estimatedTime: "35 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Las sopas calientes activan el sistema parasimpático y literalmente relajan el cuerpo.",
+    calmMessage: "Hay algo en las sopas calientes que cura el alma, además del cuerpo.",
+    category: "almuerzo",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "a8",
+    name: "Garbanzos al curry con arroz",
+    ingredients: ["garbanzos", "curry", "cebolla", "tomate", "arroz", "aceite"],
+    mainIngredients: ["garbanzos", "curry", "arroz"],
+    steps: [
+      "Rehogar la cebolla en aceite hasta dorar.",
+      "Agregar el curry y el tomate picado.",
+      "Incorporar los garbanzos y agua. Cocinar 15 minutos.",
+      "Servir sobre arroz blanco.",
+    ],
+    estimatedTime: "30 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "La cúrcuma del curry tiene propiedades antiinflamatorias que benefician la salud mental.",
+    calmMessage: "Un plato con color y sabor que te recuerda que comer puede ser una aventura.",
+    category: "almuerzo",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "a9",
+    name: "Pasta con pesto casero",
+    ingredients: ["pasta", "albahaca", "ajo", "aceite de oliva", "queso", "nueces"],
+    mainIngredients: ["pasta", "albahaca", "queso"],
+    steps: [
+      "Cocinar la pasta en agua con sal.",
+      "Procesar la albahaca, ajo, aceite, queso y nueces hasta obtener el pesto.",
+      "Mezclar la pasta caliente con el pesto.",
+      "Servir con queso rallado encima.",
+    ],
+    estimatedTime: "20 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "El aroma de la albahaca fresca tiene efectos calmantes comprobados.",
+    calmMessage: "El verde de la albahaca trae frescura y vitalidad a tu plato y a tu día.",
+    category: "almuerzo",
+    tags: ["rápida"],
+  },
+  {
+    id: "a10",
+    name: "Arroz con huevo frito y soja",
+    ingredients: ["arroz", "huevo", "aceite", "sal", "salsa de soja"],
+    mainIngredients: ["arroz", "huevo"],
+    steps: [
+      "Cocinar el arroz blanco.",
+      "Freír los huevos a gusto.",
+      "Servir el arroz con el huevo encima.",
+      "Agregar un chorrito de salsa de soja.",
+    ],
+    estimatedTime: "20 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Este plato simple pero completo demuestra que no necesitas nada complicado para comer bien.",
+    calmMessage: "Lo básico hecho con cariño siempre reconforta.",
+    category: "almuerzo",
+    tags: ["económica", "rápida"],
+  },
+
+  // ── CENAS ─────────────────────────────────────────────────────
+  {
+    id: "c1",
+    name: "Puré de papas con queso",
+    ingredients: ["papas", "leche", "manteca", "queso", "sal"],
+    mainIngredients: ["papas", "manteca", "queso"],
+    steps: [
+      "Pelar y hervir las papas hasta que estén tiernas.",
+      "Escurrir y pisar bien con un tenedor.",
+      "Agregar la manteca, la leche caliente y el queso.",
+      "Revolver hasta obtener una consistencia cremosa.",
+    ],
+    estimatedTime: "25 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "El puré de papas es comida de cuidado. Textura suave para un momento de descanso.",
+    calmMessage: "Suave, cálido y reconfortante. Para terminar el día con calma.",
+    category: "cena",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "c2",
+    name: "Sopa de fideos con verduras",
+    ingredients: ["fideos", "caldo", "zanahoria", "cebolla", "sal"],
+    mainIngredients: ["fideos", "caldo", "zanahoria"],
+    steps: [
+      "Calentar el caldo en una olla.",
+      "Agregar la zanahoria y la cebolla picadas.",
+      "Incorporar los fideos y cocinar según las instrucciones del paquete.",
+      "Condimentar con sal y servir caliente.",
+    ],
+    estimatedTime: "20 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Una sopa caliente antes de dormir prepara al cuerpo para el descanso reparador.",
+    calmMessage: "La sopa de la abuela sigue siendo el mejor remedio del mundo.",
+    category: "cena",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "c3",
+    name: "Revuelto de verduras con huevo",
+    ingredients: ["huevos", "pimiento", "cebolla", "tomate", "aceite", "sal"],
+    mainIngredients: ["huevos", "pimiento", "tomate"],
+    steps: [
+      "Rehogar la cebolla y el pimiento en aceite.",
+      "Agregar el tomate y cocinar 5 minutos.",
+      "Añadir los huevos batidos y revolver suavemente.",
+      "Condimentar con sal y servir.",
+    ],
+    estimatedTime: "15 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Cocinar con colores variados aumenta la variedad de nutrientes y la alegría visual.",
+    calmMessage: "Una cena ligera y colorida para terminar el día con ligereza.",
+    category: "cena",
+    tags: ["económica", "rápida"],
+  },
+  {
+    id: "c4",
+    name: "Tostadas con jamón y queso derretido",
+    ingredients: ["pan", "jamón", "queso", "tomate"],
+    mainIngredients: ["pan", "jamón", "queso"],
+    steps: [
+      "Tostar el pan.",
+      "Colocar jamón y queso encima.",
+      "Llevar al microondas 30 segundos o a la plancha para derretir el queso.",
+      "Agregar rodajas de tomate y servir.",
+    ],
+    estimatedTime: "10 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Una cena simple y sin esfuerzo también es una buena cena. No todo tiene que ser complicado.",
+    calmMessage: "No siempre hay que cocinar elaborado para comer bien. Hoy alcanza con esto.",
+    category: "cena",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "c5",
+    name: "Ensalada completa con huevo duro",
+    ingredients: ["lechuga", "tomate", "huevo", "zanahoria", "aceite", "sal", "limón"],
+    mainIngredients: ["lechuga", "tomate", "huevo"],
+    steps: [
+      "Hervir el huevo 10 minutos y dejar enfriar.",
+      "Lavar y cortar la lechuga y el tomate.",
+      "Rallar la zanahoria.",
+      "Mezclar todo, pelar y cortar el huevo, condimentar con aceite, sal y limón.",
+    ],
+    estimatedTime: "15 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Terminar el día con una ensalada fresca te prepara para un sueño más tranquilo.",
+    calmMessage: "Liviano, fresco y nutritivo. Lo que tu cuerpo necesita para descansar.",
+    category: "cena",
+    tags: ["económica", "rápida"],
+  },
+  {
+    id: "c6",
+    name: "Pizza rápida con pan de molde",
+    ingredients: ["pan de molde", "tomate", "queso", "orégano", "aceite"],
+    mainIngredients: ["pan", "tomate", "queso"],
+    steps: [
+      "Colocar las rebanadas de pan en una placa.",
+      "Untar con salsa de tomate o tomate triturado.",
+      "Agregar queso rallado y orégano.",
+      "Llevar al horno o microondas hasta que el queso derrita.",
+    ],
+    estimatedTime: "15 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "A veces lo mejor es hacerse algo rico y simple sin culpa. Disfrútalo.",
+    calmMessage: "Una pizza casera rápida. Porque merecés algo rico sin complicaciones.",
+    category: "cena",
+    tags: ["rápida", "familiar"],
+  },
+  {
+    id: "c7",
+    name: "Cazuela de fideos con papa",
+    ingredients: ["fideos", "papa", "cebolla", "caldo", "sal", "aceite"],
+    mainIngredients: ["fideos", "papa", "caldo"],
+    steps: [
+      "Rehogar la cebolla en aceite.",
+      "Agregar la papa en cubos y el caldo.",
+      "Cuando la papa esté casi tierna, añadir los fideos.",
+      "Cocinar 10 minutos más, rectificar sal y servir.",
+    ],
+    estimatedTime: "35 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Un plato de cuchara al final del día es una de las formas más amables de cuidarse.",
+    calmMessage: "Caliente, nutritivo y sencillo. Para cerrar el día con ternura.",
+    category: "cena",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "c8",
+    name: "Arroz con leche casero",
+    ingredients: ["arroz", "leche", "azúcar", "canela", "limón"],
+    mainIngredients: ["arroz", "leche", "canela"],
+    steps: [
+      "Hervir el arroz en agua 10 minutos.",
+      "Agregar la leche caliente, el azúcar y la cáscara de limón.",
+      "Cocinar a fuego bajo 20 minutos revolviendo seguido.",
+      "Servir con canela por encima.",
+    ],
+    estimatedTime: "30 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "El arroz con leche evoca memorias cálidas y activa el sistema de calma del cuerpo.",
+    calmMessage: "Un postre-cena que abraza desde adentro. El aroma a canela calma el alma.",
+    category: "cena",
+    tags: ["económica", "familiar"],
+  },
+
+  // ── MERIENDAS Y SNACKS ────────────────────────────────────────
+  {
+    id: "m1",
+    name: "Tostadas con ricota y miel",
+    ingredients: ["pan", "ricota", "miel"],
+    mainIngredients: ["pan", "ricota", "miel"],
+    steps: [
+      "Tostar el pan.",
+      "Untar generosamente con ricota.",
+      "Rociar con miel.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Una merienda equilibrada entre proteínas y carbohidratos mantiene estable tu energía.",
+    calmMessage: "Simple, dulce y reconfortante. Una pausa que mereces.",
+    category: "merienda",
+    tags: ["económica", "rápida"],
+  },
+  {
+    id: "m2",
+    name: "Batido de frutas y yogur",
+    ingredients: ["frutas", "yogur", "miel", "leche"],
+    mainIngredients: ["frutas", "yogur"],
+    steps: [
+      "Colocar las frutas en la licuadora.",
+      "Agregar el yogur y un chorrito de leche.",
+      "Licuar hasta que quede suave.",
+      "Endulzar con miel si deseas.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Un batido fresco en la tarde recarga energía de manera suave y natural.",
+    calmMessage: "Colorido, fresco y listo en minutos. Así se ve el autocuidado.",
+    category: "merienda",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "m3",
+    name: "Cookies de avena y banana",
+    ingredients: ["avena", "banana", "miel", "canela"],
+    mainIngredients: ["avena", "banana"],
+    steps: [
+      "Precalentar el horno a 180°C.",
+      "Pisar la banana y mezclar con la avena, miel y canela.",
+      "Formar bolitas y aplastar en una placa.",
+      "Hornear 15 minutos hasta dorar.",
+    ],
+    estimatedTime: "25 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Hacer cookies caseras es una actividad de mindfulness que relaja y además obtienes premio al final.",
+    calmMessage: "Hornear es una forma de amor. Estas cookies son tuyas y de nadie más.",
+    category: "merienda",
+    tags: ["económica", "familiar"],
+  },
+  {
+    id: "m4",
+    name: "Manzana con canela al microondas",
+    ingredients: ["manzana", "canela", "miel"],
+    mainIngredients: ["manzana", "canela"],
+    steps: [
+      "Cortar la manzana en rodajas.",
+      "Colocar en un plato, espolvorear canela y un toque de miel.",
+      "Llevar al microondas 2 minutos.",
+      "Dejar enfriar un momento y disfrutar.",
+    ],
+    estimatedTime: "5 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "La fibra de la manzana y la canela juntas estabilizan el azúcar y reducen los nervios.",
+    calmMessage: "Cálida, dulce y lista en minutos. La naturaleza hizo la mayor parte del trabajo.",
+    category: "snack",
+    tags: ["económica", "rápida", "familiar"],
+  },
+  {
+    id: "m5",
+    name: "Nueces con frutas secas",
+    ingredients: ["nueces", "pasas de uva", "almendras"],
+    mainIngredients: ["nueces", "pasas"],
+    steps: [
+      "Mezclar un puñado de nueces con frutas secas.",
+      "Servir en un pequeño bowl.",
+    ],
+    estimatedTime: "2 minutos",
+    difficulty: "Fácil",
+    antiAnxietyTip: "Las nueces son ricas en omega-3 y magnesio, dos aliados clave contra la ansiedad.",
+    calmMessage: "A veces el snack más sencillo es el que mejor te cuida.",
+    category: "snack",
+    tags: ["rápida"],
+  },
+];
+
+export function findRecipesByIngredients(
+  userIngredients: string[],
+  count = 3
+): InternalRecipe[] {
+  const normalized = userIngredients.map((i) => i.toLowerCase().trim());
+
+  const scored = recipesDB.map((recipe) => {
+    const matches = recipe.ingredients.filter((ing) =>
+      normalized.some(
+        (ui) => ing.toLowerCase().includes(ui) || ui.includes(ing.toLowerCase())
+      )
+    ).length;
+    return { recipe, matches };
+  });
+
+  scored.sort((a, b) => b.matches - a.matches);
+  return scored.slice(0, count).map((s) => s.recipe);
+}
+
+export function getRecipesByCategory(
+  category: "desayuno" | "almuerzo" | "cena" | "merienda" | "snack",
+  tag?: string
+): InternalRecipe[] {
+  let filtered = recipesDB.filter((r) => r.category === category);
+  if (tag) {
+    filtered = filtered.filter((r) =>
+      r.tags.includes(tag as "económica" | "rápida" | "familiar")
+    );
+    if (filtered.length === 0) {
+      filtered = recipesDB.filter((r) => r.category === category);
+    }
+  }
+  return filtered;
+}
+
+export function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}

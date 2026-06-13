@@ -1,14 +1,16 @@
 import { Router, type IRouter } from "express";
 import OpenAI from "openai";
 import { GeneratePlannerBody, GeneratePlannerResponse } from "@workspace/api-zod";
+import { fallbackGeneratePlanner } from "../../lib/fallback-generator";
 
 const router: IRouter = Router();
 
-function getOpenAI(): OpenAI {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not set");
-  }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getGroqClient(): OpenAI | null {
+  if (!process.env.GROQ_API_KEY) return null;
+  return new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  });
 }
 
 router.post("/planner/generate", async (req, res): Promise<void> => {
@@ -19,99 +21,70 @@ router.post("/planner/generate", async (req, res): Promise<void> => {
   }
 
   const { preferences } = parsed.data;
-  const prefNote = preferences ? `Preferencias adicionales: ${preferences}.` : "";
+  const groq = getGroqClient();
+
+  if (!groq) {
+    req.log.info("No GROQ_API_KEY — using fallback planner (free mode)");
+    res.json(fallbackGeneratePlanner());
+    return;
+  }
+
+  const prefNote = preferences ? `Preferencias: ${preferences}.` : "";
 
   try {
-    const openai = getOpenAI();
-    const prompt = `Eres un nutricionista familiar especializado en planificación alimentaria saludable y económica. Crea un planner semanal completo (Lunes a Domingo) para una familia.
+    const prompt = `Eres un nutricionista familiar. Crea un planner semanal (Lunes a Domingo) saludable y económico.
 ${prefNote}
 
-Responde ÚNICAMENTE con un JSON válido (sin texto adicional) con este formato exacto:
+Responde ÚNICAMENTE con un JSON válido con este formato:
 
 {
   "days": [
     {
       "day": "Lunes",
-      "breakfast": {
-        "name": "Nombre de la receta",
-        "estimatedTime": "15 minutos",
-        "difficulty": "Fácil",
-        "tags": ["económica", "rápida"]
-      },
-      "lunch": { ...igual... },
-      "snack": { ...igual... },
-      "dinner": { ...igual... }
-    },
-    { "day": "Martes", ... },
-    { "day": "Miércoles", ... },
-    { "day": "Jueves", ... },
-    { "day": "Viernes", ... },
-    { "day": "Sábado", ... },
-    { "day": "Domingo", ... }
-  ],
-  "shoppingList": [
-    {
-      "category": "Verduras",
-      "items": ["zanahoria", "lechuga", "tomate", "cebolla"]
-    },
-    {
-      "category": "Proteínas",
-      "items": ["pollo", "huevos", "atún"]
-    },
-    {
-      "category": "Cereales",
-      "items": ["arroz", "avena", "pasta"]
-    },
-    {
-      "category": "Lácteos",
-      "items": ["leche", "yogur", "queso"]
-    },
-    {
-      "category": "Básicos de despensa",
-      "items": ["aceite", "sal", "ajo", "harina"]
+      "breakfast": { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["económica"] },
+      "lunch":     { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["familiar"] },
+      "snack":     { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["rápida"] },
+      "dinner":    { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["económica", "familiar"] }
     }
   ],
-  "weeklySavingsMessage": "Esta semana podrías ahorrar aproximadamente $3500 cocinando en casa en lugar de pedir delivery"
+  "shoppingList": [
+    { "category": "Verduras",  "items": ["zanahoria", "tomate"] },
+    { "category": "Proteínas", "items": ["pollo", "huevos"] },
+    { "category": "Cereales",  "items": ["arroz", "avena"] },
+    { "category": "Lácteos",   "items": ["leche", "yogur"] },
+    { "category": "Básicos de despensa", "items": ["aceite", "sal"] }
+  ],
+  "weeklySavingsMessage": "Esta semana podrías ahorrar aproximadamente $4500 cocinando en casa en lugar de pedir delivery"
 }
 
 Reglas:
-- difficulty debe ser exactamente "Fácil", "Medio" o "Difícil"
-- tags puede incluir "económica", "rápida", "familiar" — elige los que apliquen
-- Las comidas deben ser variadas, sin repetirse demasiado en la semana
-- Usa ingredientes cotidianos y accesibles en Latinoamérica
-- La lista de compras debe consolidar todos los ingredientes de la semana
-- El mensaje de ahorro debe incluir un monto realista en pesos latinoamericanos (entre $2000 y $8000 ARS / $150 y $500 MXN)
-- Genera exactamente 7 días`;
+- difficulty: exactamente "Fácil", "Medio" o "Difícil"
+- tags: solo "económica", "rápida" o "familiar"
+- Genera exactamente 7 días: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado, Domingo
+- La lista de compras agrupa todos los ingredientes de la semana`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 6000,
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 5000,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
     });
 
     const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      res.status(500).json({ error: "No se pudo generar la respuesta" });
-      return;
-    }
+    if (!content) throw new Error("Empty response from Groq");
 
     const rawData = JSON.parse(content);
     const validated = GeneratePlannerResponse.safeParse(rawData);
     if (!validated.success) {
-      req.log.warn({ errors: validated.error.message }, "AI planner response did not match schema");
-      res.status(500).json({ error: "Formato de respuesta inválido" });
+      req.log.warn({ errors: validated.error.message }, "Groq response schema mismatch — falling back");
+      res.json(fallbackGeneratePlanner());
       return;
     }
 
     res.json(validated.data);
   } catch (err) {
-    req.log.error({ err }, "Error generating planner");
-    if (err instanceof Error && err.message === "OPENAI_API_KEY is not set") {
-      res.status(500).json({ error: "API key de OpenAI no configurada" });
-      return;
-    }
-    res.status(500).json({ error: "Error al generar el planner. Por favor intenta de nuevo." });
+    req.log.warn({ err }, "Groq call failed — falling back to internal planner");
+    res.json(fallbackGeneratePlanner());
   }
 });
 

@@ -9,7 +9,7 @@ App mobile-first de cocina anti ansiedad que genera recetas, menús y planners s
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- Required env: `OPENAI_API_KEY` — OpenAI API key for recipe/menu/planner generation
+- Required env: `GROQ_API_KEY` — Groq API key for AI-powered generation (optional — app works without it via fallback)
 
 ## Stack
 
@@ -20,7 +20,8 @@ App mobile-first de cocina anti ansiedad que genera recetas, menús y planners s
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
-- AI: OpenAI `gpt-4o-mini` via direct API key
+- AI: Groq `llama-3.3-70b-versatile` via OpenAI-compatible SDK (base URL swap)
+- Fallback: internal recipe DB (32 recipes) when no API key or Groq fails
 
 ## Where things live
 
@@ -31,11 +32,15 @@ App mobile-first de cocina anti ansiedad que genera recetas, menús y planners s
 - `artifacts/api-server/src/routes/recipes/` — recipe generation route (POST /api/recipes/generate)
 - `artifacts/api-server/src/routes/menu/` — menu generation route (POST /api/menu/generate)
 - `artifacts/api-server/src/routes/planner/` — planner generation route (POST /api/planner/generate)
+- `artifacts/api-server/src/lib/recipes-db.ts` — 32 internal recipes with ingredient matching
+- `artifacts/api-server/src/lib/fallback-generator.ts` — fallback logic for all 3 modules
 
 ## Architecture decisions
 
-- AI-only backend (no DB persistence yet) — OpenAI `gpt-4o-mini` with `response_format: json_object` for structured output
-- All AI routes validate responses with Zod schemas from codegen before returning
+- Primary AI: Groq `llama-3.3-70b-versatile` via OpenAI SDK with `baseURL: https://api.groq.com/openai/v1`
+- Hybrid model: Groq when `GROQ_API_KEY` is set (premium), internal recipe DB fallback otherwise (free)
+- All AI routes try Groq → validate with Zod → fallback to internal DB on any error
+- Home page shows static "Modo gratis activo" banner with "Desbloquear IA personalizada" button (payments not wired yet)
 - Mobile-first: max-width ~480px, big touch targets, no dark mode
 - Framer Motion for page transitions and staggered card entrances
 - No auth, no payments in this MVP
@@ -56,9 +61,10 @@ Three modules:
 
 ## Gotchas
 
-- `OPENAI_API_KEY` must be set as a secret — the app shows a clear error if missing
-- API server uses `gpt-4o-mini` (not `gpt-5`) to keep costs low
-- All AI response JSON is validated with Zod — if schema mismatches, returns 500 with message
+- `GROQ_API_KEY` is optional — without it the app works silently using the internal recipe DB (free mode)
+- Groq uses model `llama-3.3-70b-versatile` with `response_format: json_object`
+- All AI responses are validated with Zod; on mismatch or error the server falls back to internal DB (never crashes)
+- The OpenAI SDK is reused for Groq by pointing `baseURL` at `https://api.groq.com/openai/v1`
 - After any OpenAPI spec change: run `pnpm --filter @workspace/api-spec run codegen` before touching routes or frontend
 
 ## Pointers

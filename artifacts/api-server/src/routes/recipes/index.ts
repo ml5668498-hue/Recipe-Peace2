@@ -1,15 +1,16 @@
 import { Router, type IRouter } from "express";
 import OpenAI from "openai";
 import { GenerateRecipesBody, GenerateRecipesResponse } from "@workspace/api-zod";
-import { logger } from "../../lib/logger";
+import { fallbackGenerateRecipes } from "../../lib/fallback-generator";
 
 const router: IRouter = Router();
 
-function getOpenAI(): OpenAI {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not set");
-  }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getGroqClient(): OpenAI | null {
+  if (!process.env.GROQ_API_KEY) return null;
+  return new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  });
 }
 
 router.post("/recipes/generate", async (req, res): Promise<void> => {
@@ -20,9 +21,16 @@ router.post("/recipes/generate", async (req, res): Promise<void> => {
   }
 
   const { ingredients } = parsed.data;
+  const groq = getGroqClient();
+
+  if (!groq) {
+    req.log.info("No GROQ_API_KEY — using internal recipe database (free mode)");
+    const result = fallbackGenerateRecipes(ingredients);
+    res.json(result);
+    return;
+  }
 
   try {
-    const openai = getOpenAI();
     const prompt = `Eres un chef amable especializado en cocina anti ansiedad alimentaria. El usuario tiene estos ingredientes disponibles: ${ingredients.join(", ")}.
 
 Genera exactamente 3 recetas usando principalmente esos ingredientes. Responde ÚNICAMENTE con un JSON válido (sin texto adicional) con este formato exacto:
@@ -35,7 +43,7 @@ Genera exactamente 3 recetas usando principalmente esos ingredientes. Responde �
       "steps": ["Paso 1", "Paso 2", "Paso 3"],
       "estimatedTime": "20 minutos",
       "difficulty": "Fácil",
-      "antiAnxietyTip": "Un consejo breve y calmante relacionado con esta receta o con comer sin ansiedad"
+      "antiAnxietyTip": "Un consejo breve y calmante relacionado con esta receta"
     }
   ]
 }
@@ -44,38 +52,30 @@ Reglas:
 - difficulty debe ser exactamente "Fácil", "Medio" o "Difícil"
 - Los pasos deben ser simples, claros y sin tecnicismos
 - El antiAnxietyTip debe ser cálido, breve y reconfortante
-- Usa ingredientes cotidianos y accesibles
 - Máximo 6 pasos por receta`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       max_tokens: 2000,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
     });
 
     const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      res.status(500).json({ error: "No se pudo generar la respuesta" });
-      return;
-    }
+    if (!content) throw new Error("Empty response from Groq");
 
     const rawData = JSON.parse(content);
     const validated = GenerateRecipesResponse.safeParse(rawData);
     if (!validated.success) {
-      req.log.warn({ errors: validated.error.message }, "AI response did not match schema");
-      res.status(500).json({ error: "Formato de respuesta inválido" });
+      req.log.warn({ errors: validated.error.message }, "Groq response did not match schema — falling back");
+      res.json(fallbackGenerateRecipes(ingredients));
       return;
     }
 
     res.json(validated.data);
   } catch (err) {
-    req.log.error({ err }, "Error generating recipes");
-    if (err instanceof Error && err.message === "OPENAI_API_KEY is not set") {
-      res.status(500).json({ error: "API key de OpenAI no configurada" });
-      return;
-    }
-    res.status(500).json({ error: "Error al generar recetas. Por favor intenta de nuevo." });
+    req.log.warn({ err }, "Groq call failed — falling back to internal DB");
+    res.json(fallbackGenerateRecipes(ingredients));
   }
 });
 
