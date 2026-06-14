@@ -16,18 +16,30 @@ import { Input } from "@/components/ui/input";
 
 const STORAGE_KEY = "recetario_waitlist";
 
-function loadWaitlist(): string[] {
+interface WaitlistEntry {
+  name: string;
+  email: string;
+  joinedAt: number;
+}
+
+function loadWaitlist(): WaitlistEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    // migrate old format (array of strings) to new format
+    if (parsed.length > 0 && typeof parsed[0] === "string") {
+      return (parsed as string[]).map((email) => ({ name: "", email, joinedAt: 0 }));
+    }
+    return parsed as WaitlistEntry[];
   } catch {
     return [];
   }
 }
 
-function saveWaitlist(emails: string[]) {
+function saveWaitlist(entries: WaitlistEntry[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(emails));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   } catch {
     // ignore
   }
@@ -67,21 +79,31 @@ const benefits = [
 ];
 
 export default function Premium() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [joined, setJoined] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+
+  const validate = () => {
+    const next: { name?: string; email?: string } = {};
+    if (!name.trim()) next.name = "Ingresá tu nombre.";
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      next.email = "Ingresá un email válido.";
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
 
   const handleJoin = () => {
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError("Ingresá un email válido para unirte.");
-      return;
-    }
-    setError("");
+    if (!validate()) return;
+    const entry: WaitlistEntry = {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      joinedAt: Date.now(),
+    };
     const list = loadWaitlist();
-    if (!list.includes(trimmed)) {
-      saveWaitlist([...list, trimmed]);
-    }
+    const alreadyIn = list.some((e) => e.email === entry.email);
+    if (!alreadyIn) saveWaitlist([...list, entry]);
     setJoined(true);
   };
 
@@ -159,50 +181,76 @@ export default function Premium() {
                   key="success"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center text-center py-4 gap-3"
+                  className="flex flex-col items-center text-center py-6 gap-4"
                 >
-                  <div className="w-14 h-14 bg-secondary/30 rounded-full flex items-center justify-center text-secondary-foreground mb-1">
-                    <CheckCircle2 size={28} strokeWidth={1.5} />
+                  <div className="w-16 h-16 bg-secondary/30 rounded-full flex items-center justify-center text-secondary-foreground">
+                    <CheckCircle2 size={30} strokeWidth={1.5} />
                   </div>
-                  <p className="font-serif text-xl font-medium text-foreground">Anotado</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-[220px]">
-                    Te avisamos cuando Premium esté disponible. Gracias por tu confianza.
-                  </p>
+                  <div>
+                    <p className="font-serif text-xl font-medium text-foreground mb-2">
+                      ¡Estás en la lista!
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-[230px]">
+                      Te avisaremos cuando Premium esté disponible.
+                    </p>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div key="form" exit={{ opacity: 0 }}>
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-5">
                     <Mail size={20} className="text-primary shrink-0" strokeWidth={1.5} />
                     <div>
                       <p className="font-serif text-[17px] font-medium text-foreground leading-snug">
-                        Quiero entrar a la lista de espera
+                        Unirme a Premium
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Te avisamos cuando esté listo.
+                        Te avisamos cuando esté disponible.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-3">
-                    <Input
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setError("");
-                      }}
-                      onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-                      className={`h-12 rounded-xl border-border/60 bg-background focus-visible:ring-primary/50 text-base ${error ? "border-destructive/60" : ""}`}
-                    />
-                    {error && (
-                      <p className="text-xs text-destructive -mt-1 px-1">{error}</p>
-                    )}
+                    {/* Name */}
+                    <div>
+                      <Input
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={name}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          setErrors((prev) => ({ ...prev, name: undefined }));
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                        className={`h-12 rounded-xl border-border/60 bg-background focus-visible:ring-primary/50 text-base ${errors.name ? "border-destructive/60" : ""}`}
+                      />
+                      {errors.name && (
+                        <p className="text-xs text-destructive mt-1.5 px-1">{errors.name}</p>
+                      )}
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setErrors((prev) => ({ ...prev, email: undefined }));
+                        }}
+                        onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                        className={`h-12 rounded-xl border-border/60 bg-background focus-visible:ring-primary/50 text-base ${errors.email ? "border-destructive/60" : ""}`}
+                      />
+                      {errors.email && (
+                        <p className="text-xs text-destructive mt-1.5 px-1">{errors.email}</p>
+                      )}
+                    </div>
+
                     <Button
                       onClick={handleJoin}
-                      className="w-full h-13 rounded-xl text-[16px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                      className="w-full h-12 rounded-xl text-[16px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm mt-1"
                     >
-                      Quiero entrar a la lista de espera
+                      Unirme a Premium
                     </Button>
                   </div>
                 </motion.div>
