@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { FeedbackDrawer } from "@/components/feedback-drawer";
 
 export function Layout({ children, title, showBack = true }: { children: ReactNode; title?: string; showBack?: boolean }) {
   const [location] = useLocation();
@@ -18,9 +19,10 @@ export function Layout({ children, title, showBack = true }: { children: ReactNo
             {title && <h1 className="font-serif text-lg font-medium tracking-tight text-foreground">{title}</h1>}
           </header>
         )}
-        <main className="flex-1 flex flex-col relative">
+        <main className="flex-1 flex flex-col relative pb-20">
           {children}
         </main>
+        <FeedbackDrawer />
       </div>
     </div>
   );
