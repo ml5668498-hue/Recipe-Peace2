@@ -45,8 +45,11 @@ function mealFromRecipe(r: InternalRecipe) {
   return {
     name: r.name,
     mainIngredients: r.mainIngredients,
+    ingredients: r.ingredients,
+    steps: r.steps,
     estimatedTime: r.estimatedTime,
     difficulty: r.difficulty,
+    antiAnxietyTip: r.antiAnxietyTip,
     calmMessage: r.calmMessage,
   };
 }
@@ -54,8 +57,11 @@ function mealFromRecipe(r: InternalRecipe) {
 function plannerMealFromRecipe(r: InternalRecipe) {
   return {
     name: r.name,
+    ingredients: r.ingredients,
+    steps: r.steps,
     estimatedTime: r.estimatedTime,
     difficulty: r.difficulty,
+    antiAnxietyTip: r.antiAnxietyTip,
     tags: r.tags,
   };
 }

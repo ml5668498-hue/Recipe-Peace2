@@ -10,7 +10,10 @@ import type { MealDifficulty } from './mealDifficulty';
 export interface Meal {
   name: string;
   mainIngredients: string[];
+  ingredients: string[];
+  steps: string[];
   estimatedTime: string;
   difficulty: MealDifficulty;
+  antiAnxietyTip: string;
   calmMessage: string;
 }

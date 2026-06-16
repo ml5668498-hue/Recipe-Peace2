@@ -32,19 +32,27 @@ router.post("/planner/generate", async (req, res): Promise<void> => {
   const prefNote = preferences ? `Preferencias: ${preferences}.` : "";
 
   try {
-    const prompt = `Eres un nutricionista familiar. Crea un planner semanal (Lunes a Domingo) saludable y económico.
+    const prompt = `Eres un nutricionista familiar. Crea un planner semanal (Lunes a Domingo) saludable, económico y con recetas completas para cada comida.
 ${prefNote}
 
-Responde ÚNICAMENTE con un JSON válido con este formato:
+Responde ÚNICAMENTE con un JSON válido con este formato exacto:
 
 {
   "days": [
     {
       "day": "Lunes",
-      "breakfast": { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["económica"] },
-      "lunch":     { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["familiar"] },
-      "snack":     { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["rápida"] },
-      "dinner":    { "name": "...", "estimatedTime": "...", "difficulty": "Fácil", "tags": ["económica", "familiar"] }
+      "breakfast": {
+        "name": "Nombre del plato",
+        "ingredients": ["2 huevos", "1 rebanada pan", "1 cdta aceite"],
+        "steps": ["Paso 1.", "Paso 2.", "Paso 3."],
+        "estimatedTime": "10 minutos",
+        "difficulty": "Fácil",
+        "antiAnxietyTip": "Consejo específico anti ansiedad o de organización para este plato.",
+        "tags": ["económica", "rápida"]
+      },
+      "lunch":     { "name": "...", "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "tags": ["familiar"] },
+      "snack":     { "name": "...", "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "tags": ["rápida"] },
+      "dinner":    { "name": "...", "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "tags": ["económica", "familiar"] }
     }
   ],
   "shoppingList": [
@@ -59,13 +67,16 @@ Responde ÚNICAMENTE con un JSON válido con este formato:
 
 Reglas:
 - difficulty: exactamente "Fácil", "Medio" o "Difícil"
-- tags: solo "económica", "rápida" o "familiar"
+- tags: solo valores de ["económica", "rápida", "familiar"]
+- ingredients: lista con cantidades exactas (ej: "200g arroz", "2 huevos", "1 cebolla")
+- steps: 3 a 4 pasos claros y concisos por comida
+- antiAnxietyTip: consejo útil de bienestar o de organización familiar
 - Genera exactamente 7 días: Lunes, Martes, Miércoles, Jueves, Viernes, Sábado, Domingo
-- La lista de compras agrupa todos los ingredientes de la semana`;
+- La lista de compras agrupa todos los ingredientes de la semana sin repetir`;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      max_tokens: 5000,
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 8000,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
     });

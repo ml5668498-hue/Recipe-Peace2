@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGeneratePlanner } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
-import { Loader2, ListTodo, ShoppingBag, PiggyBank, Clock, ChefHat, Star } from "lucide-react";
+import { Loader2, ListTodo, ShoppingBag, PiggyBank, Clock, ChefHat, Star, ShoppingBasket, ListChecks, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRecetario } from "@/hooks/use-recetario";
 
@@ -17,7 +17,6 @@ export default function Planner() {
 
   const prevSuccess = useRef(false);
 
-  // Auto-save to history on new generation
   useEffect(() => {
     if (generatePlanner.isSuccess && generatePlanner.data && !prevSuccess.current) {
       const id = addPlanner(generatePlanner.data as any);
@@ -41,7 +40,7 @@ export default function Planner() {
       <div className="flex-1 flex flex-col p-6">
         <div className="mb-8">
           <p className="text-muted-foreground text-[15px] leading-relaxed mb-6">
-            Planificar con anticipación reduce la carga mental diaria. Genera un menú semanal balanceado para todos, con lista de compras incluida.
+            Planificar con anticipación reduce la carga mental diaria. Genera un menú semanal balanceado para todos, con recetas completas y lista de compras incluida.
           </p>
 
           <div className="space-y-2">
@@ -143,48 +142,97 @@ export default function Planner() {
                       <h4 className="font-medium text-lg text-foreground mb-4 sticky top-16 bg-background/95 backdrop-blur py-2 z-10">
                         {day.day}
                       </h4>
-                      <div className="grid gap-3">
+                      <div className="flex flex-col gap-4">
                         {[
                           { label: "Desayuno", meal: day.breakfast },
                           { label: "Almuerzo", meal: day.lunch },
                           { label: "Merienda", meal: day.snack },
                           { label: "Cena", meal: day.dinner },
                         ].map(({ label, meal }, mealIndex) => (
-                          <div
+                          <motion.div
                             key={mealIndex}
-                            className="bg-card rounded-xl p-4 border border-border/60 shadow-sm"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: dayIndex * 0.05 + mealIndex * 0.05 }}
+                            className="bg-card rounded-2xl p-5 border border-border/60 shadow-sm relative overflow-hidden"
                           >
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                              {label}
-                            </p>
-                            <h5 className="font-serif text-[17px] font-medium text-foreground mb-2 leading-snug">
-                              {meal.name}
-                            </h5>
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-primary/20" />
+                            <div className="pl-2">
+                              <p className="text-xs font-medium text-primary uppercase tracking-wider mb-1">
+                                {label}
+                              </p>
+                              <h5 className="font-serif text-[18px] font-medium text-foreground mb-3 leading-snug">
+                                {meal.name}
+                              </h5>
 
-                            <div className="flex flex-wrap gap-2 mt-3">
-                              <Badge
-                                variant="secondary"
-                                className="bg-secondary/20 text-secondary-foreground hover:bg-secondary/30 font-normal rounded-md px-2 py-0.5 border-none text-xs flex gap-1 items-center"
-                              >
-                                <Clock size={10} /> {meal.estimatedTime}
-                              </Badge>
-                              <Badge
-                                variant="outline"
-                                className="font-normal rounded-md px-2 py-0.5 border-border/60 text-xs flex gap-1 items-center"
-                              >
-                                <ChefHat size={10} className="opacity-70" /> {meal.difficulty}
-                              </Badge>
-                              {meal.tags.map((tag, t) => (
+                              <div className="flex flex-wrap gap-2 mb-4">
                                 <Badge
-                                  key={t}
                                   variant="secondary"
-                                  className="bg-primary/10 text-primary hover:bg-primary/20 font-normal rounded-md px-2 py-0.5 border-none text-xs"
+                                  className="bg-secondary/20 text-secondary-foreground hover:bg-secondary/30 font-normal rounded-md px-2 py-0.5 border-none text-xs flex gap-1 items-center"
                                 >
-                                  {tag}
+                                  <Clock size={10} /> {meal.estimatedTime}
                                 </Badge>
-                              ))}
+                                <Badge
+                                  variant="outline"
+                                  className="font-normal rounded-md px-2 py-0.5 border-border/60 text-xs flex gap-1 items-center"
+                                >
+                                  <ChefHat size={10} className="opacity-70" /> {meal.difficulty}
+                                </Badge>
+                                {meal.tags.map((tag, t) => (
+                                  <Badge
+                                    key={t}
+                                    variant="secondary"
+                                    className="bg-primary/10 text-primary hover:bg-primary/20 font-normal rounded-md px-2 py-0.5 border-none text-xs"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+
+                              {/* Ingredients */}
+                              <div className="mb-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <ShoppingBasket size={13} className="text-primary/70" />
+                                  <p className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Ingredientes</p>
+                                </div>
+                                <ul className="space-y-1 pl-1">
+                                  {meal.ingredients.map((ing, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-[13px] text-foreground/75">
+                                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
+                                      {ing}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              {/* Steps */}
+                              <div className="mb-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <ListChecks size={13} className="text-primary/70" />
+                                  <p className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Preparación</p>
+                                </div>
+                                <ol className="space-y-2 pl-1">
+                                  {meal.steps.map((step, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-[13px] text-foreground/75 leading-snug">
+                                      <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-secondary/40 text-foreground/70 text-xs flex items-center justify-center font-medium">
+                                        {i + 1}
+                                      </span>
+                                      {step}
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+
+                              {/* Anti-anxiety tip */}
+                              <div className="bg-background rounded-xl p-3 flex gap-2.5 items-start border border-border/40">
+                                <Lightbulb size={13} className="text-accent-foreground/60 shrink-0 mt-0.5" />
+                                <p className="text-[12px] text-foreground/70 leading-snug">
+                                  <span className="font-semibold text-foreground/80">Tip: </span>
+                                  {meal.antiAnxietyTip}
+                                </p>
+                              </div>
                             </div>
-                          </div>
+                          </motion.div>
                         ))}
                       </div>
                     </div>

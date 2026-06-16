@@ -3,10 +3,13 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useGenerateMenu } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
-import { Loader2, CalendarHeart, Clock, ChefHat, Sparkles, Star } from "lucide-react";
-import { MenuInputType, MenuInputQuickOption } from "@workspace/api-client-react/src/generated/api.schemas";
+import { Loader2, CalendarHeart, Clock, ChefHat, Sparkles, Star, ShoppingBasket, ListChecks, Lightbulb } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { useRecetario } from "@/hooks/use-recetario";
+
+type MenuInputType = "day" | "week";
+type MenuInputQuickOption = "10min" | "20min" | "economico" | "familiar";
 
 export default function Menu() {
   const [type, setType] = useState<MenuInputType>("day");
@@ -18,7 +21,6 @@ export default function Menu() {
 
   const prevSuccess = useRef(false);
 
-  // Auto-save to history on new generation
   useEffect(() => {
     if (generateMenu.isSuccess && generateMenu.data && !prevSuccess.current) {
       const label = type === "week" ? "Menú semanal" : "Menú del día";
@@ -112,7 +114,6 @@ export default function Menu() {
               animate={{ opacity: 1 }}
               className="flex flex-col gap-8"
             >
-              {/* Save as favorite button */}
               {savedId && (
                 <motion.button
                   initial={{ opacity: 0, y: -8 }}
@@ -171,14 +172,53 @@ export default function Menu() {
                           </Badge>
                         </div>
 
-                        <p className="text-[14px] text-foreground/70 mb-4">
-                          <span className="font-medium text-foreground/90">Necesitas: </span>
-                          {meal.mainIngredients.join(", ")}
-                        </p>
+                        {/* Ingredients */}
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <ShoppingBasket size={14} className="text-primary/70" />
+                            <p className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Ingredientes</p>
+                          </div>
+                          <ul className="space-y-1 pl-1">
+                            {meal.ingredients.map((ing, i) => (
+                              <li key={i} className="flex items-start gap-2 text-[14px] text-foreground/75">
+                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
+                                {ing}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                        <div className="bg-background rounded-xl p-3.5 flex gap-3 items-center border border-border/40">
-                          <Sparkles size={16} className="text-accent-foreground/60 shrink-0" />
-                          <p className="text-[14px] text-foreground/80 leading-snug">"{meal.calmMessage}"</p>
+                        {/* Steps */}
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <ListChecks size={14} className="text-primary/70" />
+                            <p className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">Preparación</p>
+                          </div>
+                          <ol className="space-y-2 pl-1">
+                            {meal.steps.map((step, i) => (
+                              <li key={i} className="flex items-start gap-3 text-[14px] text-foreground/75 leading-snug">
+                                <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-secondary/40 text-foreground/70 text-xs flex items-center justify-center font-medium">
+                                  {i + 1}
+                                </span>
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+
+                        {/* Anti-anxiety tip */}
+                        <div className="bg-background rounded-xl p-3.5 flex gap-3 items-start border border-border/40 mb-3">
+                          <Lightbulb size={15} className="text-accent-foreground/60 shrink-0 mt-0.5" />
+                          <p className="text-[13px] text-foreground/75 leading-snug">
+                            <span className="font-semibold text-foreground/85">Tip: </span>
+                            {meal.antiAnxietyTip}
+                          </p>
+                        </div>
+
+                        {/* Calm message */}
+                        <div className="flex gap-3 items-center">
+                          <Sparkles size={14} className="text-accent-foreground/50 shrink-0" />
+                          <p className="text-[13px] text-foreground/60 italic leading-snug">"{meal.calmMessage}"</p>
                         </div>
                       </div>
                     </motion.div>

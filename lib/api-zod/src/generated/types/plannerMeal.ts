@@ -10,7 +10,10 @@ import type { PlannerMealTagsItem } from './plannerMealTagsItem';
 
 export interface PlannerMeal {
   name: string;
+  ingredients: string[];
+  steps: string[];
   estimatedTime: string;
   difficulty: PlannerMealDifficulty;
+  antiAnxietyTip: string;
   tags: PlannerMealTagsItem[];
 }

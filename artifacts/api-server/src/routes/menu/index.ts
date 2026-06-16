@@ -43,33 +43,45 @@ router.post("/menu/generate", async (req, res): Promise<void> => {
   const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
   try {
-    const prompt = `Eres un nutricionista especializado en alimentación anti ansiedad. Crea un menú ${isWeek ? "semanal completo (7 días)" : "para un día"} equilibrado, simple y calmante.
+    const prompt = `Eres un nutricionista especializado en alimentación anti ansiedad. Crea un menú ${isWeek ? "semanal completo (7 días)" : "para un día"} equilibrado, simple y calmante. Para cada comida incluye la receta completa con ingredientes exactos y pasos de preparación.
 ${quickConstraint}
 
-Responde ÚNICAMENTE con un JSON válido (sin texto adicional) con este formato:
+Responde ÚNICAMENTE con un JSON válido (sin texto adicional) con este formato exacto:
 
 {
   "days": [
     {
       "dayLabel": ${isWeek ? '"Lunes"' : "null"},
-      "breakfast": { "name": "...", "mainIngredients": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "calmMessage": "..." },
-      "lunch": { "name": "...", "mainIngredients": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "calmMessage": "..." },
-      "snack": { "name": "...", "mainIngredients": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "calmMessage": "..." },
-      "dinner": { "name": "...", "mainIngredients": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "calmMessage": "..." },
-      "optionalSnack": { "name": "...", "mainIngredients": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "calmMessage": "..." }
+      "breakfast": {
+        "name": "Nombre del plato",
+        "mainIngredients": ["ingrediente1", "ingrediente2"],
+        "ingredients": ["100g ingrediente1", "2 unidades ingrediente2", "1 cdta ingrediente3"],
+        "steps": ["Paso 1 de preparación.", "Paso 2 de preparación.", "Paso 3 de preparación."],
+        "estimatedTime": "10 minutos",
+        "difficulty": "Fácil",
+        "antiAnxietyTip": "Consejo anti ansiedad específico para este plato.",
+        "calmMessage": "Mensaje reconfortante breve."
+      },
+      "lunch": { "name": "...", "mainIngredients": ["..."], "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "calmMessage": "..." },
+      "snack": { "name": "...", "mainIngredients": ["..."], "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "calmMessage": "..." },
+      "dinner": { "name": "...", "mainIngredients": ["..."], "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "calmMessage": "..." },
+      "optionalSnack": { "name": "...", "mainIngredients": ["..."], "ingredients": ["..."], "steps": ["..."], "estimatedTime": "...", "difficulty": "Fácil", "antiAnxietyTip": "...", "calmMessage": "..." }
     }${isWeek ? " ... repite para los 7 días" : ""}
   ]
 }
 
 Reglas:
 - difficulty debe ser exactamente "Fácil", "Medio" o "Difícil"
+- ingredients: lista completa con cantidades exactas (ej: "2 huevos", "200g arroz", "1 cdta sal")
+- steps: 3 a 5 pasos claros y concisos
+- antiAnxietyTip: consejo específico del beneficio anti ansiedad de ese plato
 - Cada calmMessage debe ser único, breve y reconfortante
 - Genera exactamente ${daysCount} día${daysCount > 1 ? "s" : ""}
 - Los días deben ser: ${isWeek ? dayNames.join(", ") : "null (solo un día)"}`;
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      max_tokens: isWeek ? 5000 : 1500,
+      model: "llama-3.3-70b-versatile",
+      max_tokens: isWeek ? 8000 : 2500,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
     });

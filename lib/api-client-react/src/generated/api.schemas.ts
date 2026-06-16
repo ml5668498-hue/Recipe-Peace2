@@ -52,8 +52,11 @@ export const MealDifficulty = {
 export interface Meal {
   name: string;
   mainIngredients: string[];
+  ingredients: string[];
+  steps: string[];
   estimatedTime: string;
   difficulty: MealDifficulty;
+  antiAnxietyTip: string;
   calmMessage: string;
 }
 
@@ -118,8 +121,11 @@ export const PlannerMealTagsItem = {
 
 export interface PlannerMeal {
   name: string;
+  ingredients: string[];
+  steps: string[];
   estimatedTime: string;
   difficulty: PlannerMealDifficulty;
+  antiAnxietyTip: string;
   tags: PlannerMealTagsItem[];
 }
 

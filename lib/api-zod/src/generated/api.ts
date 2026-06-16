@@ -52,36 +52,51 @@ export const GenerateMenuResponse = zod.object({
   "breakfast": zod.object({
   "name": zod.string(),
   "mainIngredients": zod.array(zod.string()),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "calmMessage": zod.string()
 }),
   "lunch": zod.object({
   "name": zod.string(),
   "mainIngredients": zod.array(zod.string()),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "calmMessage": zod.string()
 }),
   "snack": zod.object({
   "name": zod.string(),
   "mainIngredients": zod.array(zod.string()),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "calmMessage": zod.string()
 }),
   "dinner": zod.object({
   "name": zod.string(),
   "mainIngredients": zod.array(zod.string()),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "calmMessage": zod.string()
 }),
   "optionalSnack": zod.object({
   "name": zod.string(),
   "mainIngredients": zod.array(zod.string()),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "calmMessage": zod.string()
 })
 }))
@@ -100,26 +115,38 @@ export const GeneratePlannerResponse = zod.object({
   "day": zod.string(),
   "breakfast": zod.object({
   "name": zod.string(),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "tags": zod.array(zod.enum(['económica', 'rápida', 'familiar']))
 }),
   "lunch": zod.object({
   "name": zod.string(),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "tags": zod.array(zod.enum(['económica', 'rápida', 'familiar']))
 }),
   "snack": zod.object({
   "name": zod.string(),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "tags": zod.array(zod.enum(['económica', 'rápida', 'familiar']))
 }),
   "dinner": zod.object({
   "name": zod.string(),
+  "ingredients": zod.array(zod.string()),
+  "steps": zod.array(zod.string()),
   "estimatedTime": zod.string(),
   "difficulty": zod.enum(['Fácil', 'Medio', 'Difícil']),
+  "antiAnxietyTip": zod.string(),
   "tags": zod.array(zod.enum(['económica', 'rápida', 'familiar']))
 })
 })),

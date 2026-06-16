@@ -198,18 +198,31 @@ components:
           type: array
           items:
             type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
         estimatedTime:
           type: string
         difficulty:
           type: string
           enum: [Fácil, Medio, Difícil]
+        antiAnxietyTip:
+          type: string
         calmMessage:
           type: string
       required:
         - name
         - mainIngredients
+        - ingredients
+        - steps
         - estimatedTime
         - difficulty
+        - antiAnxietyTip
         - calmMessage
 
     DayMenu:
@@ -261,11 +274,21 @@ components:
       properties:
         name:
           type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            type: string
         estimatedTime:
           type: string
         difficulty:
           type: string
           enum: [Fácil, Medio, Difícil]
+        antiAnxietyTip:
+          type: string
         tags:
           type: array
           items:
@@ -273,8 +296,11 @@ components:
             enum: [económica, rápida, familiar]
       required:
         - name
+        - ingredients
+        - steps
         - estimatedTime
         - difficulty
+        - antiAnxietyTip
         - tags
 
     DayPlanner:
