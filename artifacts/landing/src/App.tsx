@@ -14,14 +14,14 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleWaitlist = (e: React.FormEvent) => {
+  const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email) {
       toast({
         title: "Completa los campos",
         description: "Por favor, ingresa tu nombre y email para unirte.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -31,38 +31,50 @@ export default function App() {
       toast({
         title: "Email inválido",
         description: "Por favor, ingresa una dirección de email válida.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-    
-    setTimeout(() => {
-      try {
-        const stored = localStorage.getItem("recetario_waitlist");
-        const list = stored ? JSON.parse(stored) : [];
-        
-        if (list.some((user: any) => user.email === email)) {
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email }),
+      });
+
+      if (res.ok) {
+        toast({
+          title: "¡Estás en la lista!",
+          description: "Te avisaremos cuando Premium esté disponible.",
+        });
+        setName("");
+        setEmail("");
+      } else {
+        const body = await res.json().catch(() => ({}));
+        if (res.status === 409) {
           toast({
             title: "Ya estás en la lista",
             description: "Este email ya está registrado. ¡Te avisaremos pronto!",
           });
         } else {
-          list.push({ name, email, joinedAt: Date.now() });
-          localStorage.setItem("recetario_waitlist", JSON.stringify(list));
           toast({
-            title: "¡Estás en la lista!",
-            description: "Te avisaremos cuando Premium esté disponible.",
+            title: "Error al registrarse",
+            description: body.error ?? "Intenta de nuevo en un momento.",
+            variant: "destructive",
           });
-          setName("");
-          setEmail("");
         }
-      } catch (err) {
-        console.error("Failed to save to waitlist", err);
       }
+    } catch {
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar. Intenta de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   const scrollToHowItWorks = () => {

@@ -11,6 +11,7 @@ import Planner from "@/pages/planner";
 import MyRecetario from "@/pages/my-recetario";
 import Welcome from "@/pages/welcome";
 import Premium from "@/pages/premium";
+import AdminWaitlist from "@/pages/admin-waitlist";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/planner" component={Planner} />
       <Route path="/mi-recetario" component={MyRecetario} />
       <Route path="/premium" component={Premium} />
+      <Route path="/admin" component={AdminWaitlist} />
       <Route component={NotFound} />
     </Switch>
   );

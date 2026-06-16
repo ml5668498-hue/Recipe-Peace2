@@ -14,37 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const STORAGE_KEY = "recetario_waitlist";
-
-interface WaitlistEntry {
-  name: string;
-  email: string;
-  joinedAt: number;
-}
-
-function loadWaitlist(): WaitlistEntry[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    // migrate old format (array of strings) to new format
-    if (parsed.length > 0 && typeof parsed[0] === "string") {
-      return (parsed as string[]).map((email) => ({ name: "", email, joinedAt: 0 }));
-    }
-    return parsed as WaitlistEntry[];
-  } catch {
-    return [];
-  }
-}
-
-function saveWaitlist(entries: WaitlistEntry[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  } catch {
-    // ignore
-  }
-}
-
 const benefits = [
   {
     icon: <ChefHat size={20} strokeWidth={1.5} />,
@@ -82,7 +51,8 @@ export default function Premium() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [joined, setJoined] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; server?: string }>({});
 
   const validate = () => {
     const next: { name?: string; email?: string } = {};
@@ -94,17 +64,29 @@ export default function Premium() {
     return Object.keys(next).length === 0;
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!validate()) return;
-    const entry: WaitlistEntry = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      joinedAt: Date.now(),
-    };
-    const list = loadWaitlist();
-    const alreadyIn = list.some((e) => e.email === entry.email);
-    if (!alreadyIn) saveWaitlist([...list, entry]);
-    setJoined(true);
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() }),
+      });
+
+      if (res.ok) {
+        setJoined(true);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setErrors({ server: body.error ?? "Error al registrarse. Intenta de nuevo." });
+      }
+    } catch {
+      setErrors({ server: "Error de conexión. Intenta de nuevo." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -246,21 +228,22 @@ export default function Premium() {
                       )}
                     </div>
 
+                    {errors.server && (
+                      <p className="text-xs text-destructive px-1">{errors.server}</p>
+                    )}
+
                     <Button
                       onClick={handleJoin}
+                      disabled={loading}
                       className="w-full h-12 rounded-xl text-[16px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm mt-1"
                     >
-                      Unirme a Premium
+                      {loading ? "Guardando..." : "Unirme a Premium"}
                     </Button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
-
-          <p className="text-center text-xs text-muted-foreground mt-4 leading-relaxed">
-            Tu email se guarda solo en este dispositivo. Sin spam, sin compromisos.
-          </p>
         </div>
       </div>
     </Layout>
