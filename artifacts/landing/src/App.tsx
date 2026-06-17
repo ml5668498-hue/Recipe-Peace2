@@ -85,8 +85,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-dvh bg-background text-foreground selection:bg-primary/20">
-      <div className="max-w-[480px] mx-auto bg-white shadow-xl shadow-black/5 min-h-dvh flex flex-col relative overflow-hidden">
+    <div className="min-h-dvh bg-background text-foreground selection:bg-primary/20 overflow-x-hidden">
+      <div className="max-w-[480px] mx-auto bg-white shadow-xl shadow-black/5 min-h-dvh flex flex-col relative overflow-x-hidden w-full">
         
         {/* Decorative background elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -238,10 +238,10 @@ export default function App() {
           </section>
 
           {/* Testimonials */}
-          <section className="px-6 py-16 bg-secondary/10">
+          <section className="px-6 py-16 bg-secondary/10 overflow-hidden w-full box-border">
             <h2 className="font-serif text-3xl mb-10">Miles de familias cocinando con más calma</h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-4 w-full">
               <Testimonial 
                 quote="Desde que uso Recetario de la Paz, el momento 'qué comemos hoy' ya no me genera ansiedad. Es como tener una amiga que sabe cocinar."
                 author="Valentina M."
