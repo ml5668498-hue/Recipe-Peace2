@@ -40,13 +40,20 @@ function App() {
     setWelcomed(true);
   };
 
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const isAdmin = window.location.pathname === `${base}/admin` || window.location.pathname === "/admin";
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {!welcomed ? (
+        {isAdmin ? (
+          <WouterRouter base={base}>
+            <Router />
+          </WouterRouter>
+        ) : !welcomed ? (
           <Welcome onDone={handleWelcomeDone} />
         ) : (
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <WouterRouter base={base}>
             <Router />
           </WouterRouter>
         )}
