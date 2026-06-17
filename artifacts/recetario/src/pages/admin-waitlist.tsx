@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Mail, Clock, RefreshCw, Loader2, Download } from "lucide-react";
+import { Users, Mail, Clock, RefreshCw, Loader2, Download, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface WaitlistEntry {
   id: string;
@@ -11,16 +12,43 @@ interface WaitlistEntry {
 }
 
 export default function AdminWaitlist() {
+  const [key, setKey] = useState(() => sessionStorage.getItem("admin_key") ?? "");
+  const [keyInput, setKeyInput] = useState("");
+  const [authError, setAuthError] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEntries = async () => {
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleString("es-AR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const fetchEntries = async (adminKey: string) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/waitlist");
+      const url = adminKey ? `/api/waitlist?key=${encodeURIComponent(adminKey)}` : "/api/waitlist";
+      const res = await fetch(url);
+      if (res.status === 401) {
+        setAuthenticated(false);
+        setAuthError(true);
+        sessionStorage.removeItem("admin_key");
+        setKey("");
+        return;
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `Error ${res.status}`);
@@ -28,15 +56,29 @@ export default function AdminWaitlist() {
       const data = await res.json();
       setEntries(data.entries ?? []);
       setTotal(data.total ?? 0);
+      setAuthenticated(true);
+      setAuthError(false);
+      sessionStorage.setItem("admin_key", adminKey);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      if (!authError) {
+        setError(err instanceof Error ? err.message : "Error al cargar");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(false);
+    await fetchEntries(keyInput);
+    if (!authError) setKey(keyInput);
+  };
+
   useEffect(() => {
-    fetchEntries();
+    if (key) {
+      fetchEntries(key);
+    }
   }, []);
 
   const exportCSV = () => {
@@ -54,19 +96,46 @@ export default function AdminWaitlist() {
     URL.revokeObjectURL(url);
   };
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleString("es-AR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return iso;
-    }
-  };
+  if (!authenticated) {
+    return (
+      <div className="min-h-dvh bg-background flex items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-[340px]"
+        >
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Lock size={22} className="text-primary" />
+            </div>
+            <h1 className="font-serif text-2xl text-foreground">Panel Admin</h1>
+            <p className="text-sm text-muted-foreground mt-1">Ingresá tu clave de acceso</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-3">
+            <Input
+              type="password"
+              placeholder="Clave secreta"
+              value={keyInput}
+              onChange={e => { setKeyInput(e.target.value); setAuthError(false); }}
+              className="h-12 rounded-xl text-center tracking-widest"
+              autoFocus
+            />
+            {authError && (
+              <p className="text-destructive text-sm text-center">Acceso no autorizado.</p>
+            )}
+            <Button
+              type="submit"
+              disabled={loading || !keyInput}
+              className="h-12 rounded-xl"
+            >
+              {loading ? <Loader2 size={16} className="animate-spin" /> : "Ingresar"}
+            </Button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-background">
@@ -115,7 +184,7 @@ export default function AdminWaitlist() {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchEntries}
+            onClick={() => fetchEntries(key)}
             disabled={loading}
             className="rounded-xl border-border/60 gap-2"
           >
