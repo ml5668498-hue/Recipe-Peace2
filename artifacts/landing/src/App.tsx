@@ -241,7 +241,7 @@ export default function App() {
           <section className="px-6 py-16 bg-secondary/10">
             <h2 className="font-serif text-3xl mb-10">Miles de familias cocinando con más calma</h2>
             
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-8 -mx-6 px-6 scrollbar-none">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Testimonial 
                 quote="Desde que uso Recetario de la Paz, el momento 'qué comemos hoy' ya no me genera ansiedad. Es como tener una amiga que sabe cocinar."
                 author="Valentina M."
@@ -371,7 +371,7 @@ function Step({ number, title, description }: { number: string, title: string, d
 
 function Testimonial({ quote, author, location }: { quote: string, author: string, location: string }) {
   return (
-    <div className="w-[85vw] max-w-[320px] shrink-0 snap-center bg-white p-6 rounded-3xl border border-secondary/20 shadow-sm flex flex-col">
+    <div className="w-full bg-white p-6 rounded-3xl border border-secondary/20 shadow-sm flex flex-col">
       <div className="flex gap-1 mb-4">
         {[1,2,3,4,5].map(star => (
           <Sparkles key={star} className="w-4 h-4 text-primary fill-primary" />
