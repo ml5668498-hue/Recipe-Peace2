@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Mail, Clock, RefreshCw, Loader2 } from "lucide-react";
+import { Users, Mail, Clock, RefreshCw, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface WaitlistEntry {
@@ -38,6 +38,21 @@ export default function AdminWaitlist() {
   useEffect(() => {
     fetchEntries();
   }, []);
+
+  const exportCSV = () => {
+    const header = "Nombre,Email,Fecha";
+    const rows = entries.map(e =>
+      `"${e.name.replace(/"/g, '""')}","${e.email.replace(/"/g, '""')}","${formatDate(e.created_at)}"`
+    );
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `waitlist-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const formatDate = (iso: string) => {
     try {
@@ -85,8 +100,18 @@ export default function AdminWaitlist() {
           </div>
         </motion.div>
 
-        {/* Refresh button */}
-        <div className="flex justify-end mb-4">
+        {/* Actions */}
+        <div className="flex justify-end gap-2 mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCSV}
+            disabled={loading || entries.length === 0}
+            className="rounded-xl border-border/60 gap-2"
+          >
+            <Download size={14} />
+            Exportar CSV
+          </Button>
           <Button
             variant="outline"
             size="sm"
