@@ -23,7 +23,7 @@ function TrialBanner() {
         <span>
           {trialDaysLeft === 0
             ? "Tu prueba gratis vence hoy"
-            : `Prueba gratis: ${trialDaysLeft} día${trialDaysLeft !== 1 ? "s" : ""} restante${trialDaysLeft !== 1 ? "s" : ""}`}
+            : `${trialDaysLeft} día${trialDaysLeft !== 1 ? "s" : ""} de prueba restante${trialDaysLeft !== 1 ? "s" : ""}`}
         </span>
       </div>
       <button
@@ -61,7 +61,6 @@ export function Layout({
         <TrialBanner />
 
         {isHome ? (
-          /* Home header: greeting + logout */
           user && (
             <div className="px-5 pt-5 pb-1 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -73,7 +72,7 @@ export function Layout({
                 )}
                 {subscription?.subscription_status === "trial" && (
                   <span className="text-xs text-muted-foreground">
-                    Prueba gratis · Hola, {user.name.split(" ")[0]}
+                    Hola, {user.name.split(" ")[0]} · Prueba gratis
                   </span>
                 )}
               </div>

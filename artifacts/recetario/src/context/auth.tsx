@@ -8,10 +8,10 @@ export interface User {
 
 export interface Subscription {
   subscription_status: "trial" | "active" | "expired";
+  premium: boolean;
   trial_start: string;
   trial_end: string;
-  current_period_end: string | null;
-  mp_preapproval_id: string | null;
+  days_left: number;
 }
 
 interface AuthContextValue {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSubscription(null);
   }, []);
 
-  // Global fetch interceptor: injects Authorization header to /api/ requests
+  // Inject Authorization header on all /api/ requests (except waitlist/admin)
   useEffect(() => {
     const orig = window.fetch.bind(window);
     const tok = token;
@@ -61,40 +61,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (tok && isApi) {
         init = {
           ...init,
-          headers: {
-            Authorization: `Bearer ${tok}`,
-            ...(init.headers ?? {}),
-          },
+          headers: { Authorization: `Bearer ${tok}`, ...(init.headers ?? {}) },
         };
       }
 
       return orig(input, init);
     };
 
-    return () => {
-      window.fetch = orig;
-    };
+    return () => { window.fetch = orig; };
   }, [token]);
 
-  const fetchMe = useCallback(
-    async (t: string) => {
-      try {
-        const res = await fetch(`${BASE}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${t}` },
-        });
-        if (!res.ok) {
-          logout();
-          return;
-        }
-        const data = (await res.json()) as { user: User; subscription: Subscription };
-        setUser(data.user);
-        setSubscription(data.subscription);
-      } catch {
-        logout();
-      }
-    },
-    [logout],
-  );
+  const fetchMe = useCallback(async (t: string) => {
+    try {
+      const res = await fetch(`${BASE}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      if (!res.ok) { logout(); return; }
+      const data = (await res.json()) as { user: User; subscription: Subscription };
+      setUser(data.user);
+      setSubscription(data.subscription);
+    } catch {
+      logout();
+    }
+  }, [logout]);
 
   useEffect(() => {
     if (token) {
@@ -115,13 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     try {
       const res = await fetch(`${BASE}/api/subscriptions/status`);
-      if (res.ok) {
-        const data = (await res.json()) as Subscription;
-        setSubscription(data);
-      }
-    } catch {
-      /* silent */
-    }
+      if (res.ok) setSubscription((await res.json()) as Subscription);
+    } catch { /* silent */ }
   };
 
   const hasAccess =
@@ -130,28 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const trialDaysLeft =
     subscription?.subscription_status === "trial"
-      ? Math.max(
-          0,
-          Math.ceil(
-            (new Date(subscription.trial_end).getTime() - Date.now()) /
-              (1000 * 60 * 60 * 24),
-          ),
-        )
+      ? subscription.days_left
       : null;
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        subscription,
-        token,
-        loading,
-        login,
-        logout,
-        refreshSubscription,
-        hasAccess,
-        trialDaysLeft,
-      }}
+      value={{ user, subscription, token, loading, login, logout, refreshSubscription, hasAccess, trialDaysLeft }}
     >
       {children}
     </AuthContext.Provider>

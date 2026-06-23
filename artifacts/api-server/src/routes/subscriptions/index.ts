@@ -1,35 +1,37 @@
 import { Router } from "express";
 import { requireAuth } from "../../middleware/requireAuth";
 import { getSupabaseClient } from "../../lib/supabase";
+import { computeStatus, trialDaysLeft } from "../../middleware/requireSubscription";
 
 const router = Router();
 
 router.get("/subscriptions/status", requireAuth, async (req, res): Promise<void> => {
   const supabase = getSupabaseClient();
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("subscription_status, trial_start, trial_end, mp_preapproval_id, current_period_end, created_at, updated_at")
-    .eq("user_id", req.userId!)
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("premium, created_at")
+    .eq("id", req.userId!)
     .single();
 
-  if (!sub) {
-    res.status(404).json({ error: "Suscripción no encontrada." });
+  if (!user) {
+    res.status(404).json({ error: "Usuario no encontrado." });
     return;
   }
 
-  // Expire trial if past trial_end
-  if (sub.subscription_status === "trial" && new Date() > new Date(sub.trial_end)) {
-    await supabase
-      .from("subscriptions")
-      .update({ subscription_status: "expired" })
-      .eq("user_id", req.userId!);
-    sub.subscription_status = "expired";
-  }
+  const trialEnd = new Date(user.created_at);
+  trialEnd.setDate(trialEnd.getDate() + 14);
 
-  res.json(sub);
+  res.json({
+    subscription_status: computeStatus(user.created_at, user.premium),
+    premium: user.premium,
+    trial_start: user.created_at,
+    trial_end: trialEnd.toISOString(),
+    days_left: trialDaysLeft(user.created_at),
+  });
 });
 
-// Placeholder endpoint for future Mercado Pago checkout
+// Placeholder for future Mercado Pago checkout
 router.post("/subscriptions/checkout", requireAuth, async (req, res): Promise<void> => {
   const mpToken = process.env["MERCADOPAGO_ACCESS_TOKEN"];
   if (!mpToken) {

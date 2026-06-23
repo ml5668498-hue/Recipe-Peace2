@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { getSupabaseClient } from "../../lib/supabase";
 import { requireAuth } from "../../middleware/requireAuth";
+import { computeStatus, trialDaysLeft } from "../../middleware/requireSubscription";
 
 const router = Router();
 
@@ -19,14 +20,19 @@ const LoginBody = z.object({
 });
 
 function generateToken(userId: string, email: string): string {
-  const secret = process.env["JWT_SECRET"]!;
-  return jwt.sign({ userId, email }, secret, { expiresIn: "30d" });
+  return jwt.sign({ userId, email }, process.env["JWT_SECRET"]!, { expiresIn: "30d" });
 }
 
-function getTrialEnd(): Date {
-  const d = new Date();
-  d.setDate(d.getDate() + 14);
-  return d;
+function buildSubscription(createdAt: string, premium: boolean) {
+  const trialEnd = new Date(createdAt);
+  trialEnd.setDate(trialEnd.getDate() + 14);
+  return {
+    subscription_status: computeStatus(createdAt, premium),
+    premium,
+    trial_start: createdAt,
+    trial_end: trialEnd.toISOString(),
+    days_left: trialDaysLeft(createdAt),
+  };
 }
 
 router.post("/auth/register", async (req, res): Promise<void> => {
@@ -52,36 +58,16 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const trialStart = new Date();
-  const trialEnd = getTrialEnd();
 
-  const { data: user, error: userError } = await supabase
+  const { data: user, error } = await supabase
     .from("users")
-    .insert({ name, email: normalizedEmail, password_hash: passwordHash })
-    .select("id, name, email, created_at")
+    .insert({ name, email: normalizedEmail, password_hash: passwordHash, premium: false })
+    .select("id, name, email, premium, created_at")
     .single();
 
-  if (userError || !user) {
-    req.log.error({ error: userError }, "Failed to create user");
+  if (error || !user) {
+    req.log.error({ error }, "Failed to create user");
     res.status(500).json({ error: "Error al crear el usuario." });
-    return;
-  }
-
-  const { data: sub, error: subError } = await supabase
-    .from("subscriptions")
-    .insert({
-      user_id: user.id,
-      subscription_status: "trial",
-      trial_start: trialStart.toISOString(),
-      trial_end: trialEnd.toISOString(),
-    })
-    .select("subscription_status, trial_start, trial_end, mp_preapproval_id, current_period_end")
-    .single();
-
-  if (subError || !sub) {
-    req.log.error({ error: subError }, "Failed to create subscription");
-    await supabase.from("users").delete().eq("id", user.id);
-    res.status(500).json({ error: "Error al iniciar la prueba gratuita." });
     return;
   }
 
@@ -89,7 +75,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   res.status(201).json({
     token,
     user: { id: user.id, name: user.name, email: user.email },
-    subscription: sub,
+    subscription: buildSubscription(user.created_at, user.premium),
   });
 });
 
@@ -101,46 +87,24 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const { email, password } = parsed.data;
-  const normalizedEmail = email.toLowerCase().trim();
   const supabase = getSupabaseClient();
 
   const { data: user } = await supabase
     .from("users")
-    .select("id, name, email, password_hash")
-    .eq("email", normalizedEmail)
+    .select("id, name, email, password_hash, premium, created_at")
+    .eq("email", email.toLowerCase().trim())
     .single();
 
-  if (!user) {
+  if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     res.status(401).json({ error: "Email o contraseña incorrectos." });
     return;
-  }
-
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) {
-    res.status(401).json({ error: "Email o contraseña incorrectos." });
-    return;
-  }
-
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("subscription_status, trial_start, trial_end, mp_preapproval_id, current_period_end")
-    .eq("user_id", user.id)
-    .single();
-
-  // Expire trial if past trial_end
-  if (sub?.subscription_status === "trial" && new Date() > new Date(sub.trial_end)) {
-    await supabase
-      .from("subscriptions")
-      .update({ subscription_status: "expired" })
-      .eq("user_id", user.id);
-    if (sub) sub.subscription_status = "expired";
   }
 
   const token = generateToken(user.id, user.email);
   res.json({
     token,
     user: { id: user.id, name: user.name, email: user.email },
-    subscription: sub,
+    subscription: buildSubscription(user.created_at, user.premium),
   });
 });
 
@@ -149,7 +113,7 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
 
   const { data: user } = await supabase
     .from("users")
-    .select("id, name, email, created_at")
+    .select("id, name, email, premium, created_at")
     .eq("id", req.userId!)
     .single();
 
@@ -158,21 +122,10 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("subscription_status, trial_start, trial_end, mp_preapproval_id, current_period_end")
-    .eq("user_id", user.id)
-    .single();
-
-  if (sub?.subscription_status === "trial" && new Date() > new Date(sub.trial_end)) {
-    await supabase
-      .from("subscriptions")
-      .update({ subscription_status: "expired" })
-      .eq("user_id", user.id);
-    if (sub) sub.subscription_status = "expired";
-  }
-
-  res.json({ user, subscription: sub });
+  res.json({
+    user: { id: user.id, name: user.name, email: user.email },
+    subscription: buildSubscription(user.created_at, user.premium),
+  });
 });
 
 export default router;

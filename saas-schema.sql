@@ -1,31 +1,23 @@
--- Recetario de la Paz — SaaS Schema
+-- Recetario de la Paz — Schema simplificado
 -- Ejecutar en Supabase SQL Editor
+-- Una sola tabla: users
+-- created_at = inicio del trial (14 días gratis)
+-- premium = false (trial/expirado) | true (suscriptor activo)
 
 CREATE TABLE IF NOT EXISTS users (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   email text NOT NULL UNIQUE,
   password_hash text NOT NULL,
-  created_at timestamptz DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS subscriptions (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
-  subscription_status text NOT NULL DEFAULT 'trial',
-  -- subscription_status: trial | active | expired
-  trial_start timestamptz NOT NULL DEFAULT now(),
-  trial_end timestamptz NOT NULL,
-  -- Mercado Pago (para uso futuro)
-  mp_preapproval_id text UNIQUE,
-  current_period_end timestamptz,
+  premium boolean NOT NULL DEFAULT false,
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS subscriptions_user_id_idx ON subscriptions (user_id);
-CREATE INDEX IF NOT EXISTS subscriptions_mp_id_idx ON subscriptions (mp_preapproval_id);
+-- Índice para búsquedas por email
+CREATE INDEX IF NOT EXISTS users_email_idx ON users (email);
 
+-- Función y trigger para updated_at automático
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -34,7 +26,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS subscriptions_updated_at ON subscriptions;
-CREATE TRIGGER subscriptions_updated_at
-  BEFORE UPDATE ON subscriptions
+DROP TRIGGER IF EXISTS users_updated_at ON users;
+CREATE TRIGGER users_updated_at
+  BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
