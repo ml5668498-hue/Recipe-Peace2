@@ -46,7 +46,7 @@ export function Layout({
   showBack?: boolean;
 }) {
   const [location] = useLocation();
-  const { user, subscription, logout } = useAuth();
+  const { user, subscription, logout, trialDaysLeft } = useAuth();
   const isHome = location === "/";
 
   const handleLogout = () => {
