@@ -3,17 +3,16 @@ import { getPool } from "../lib/db";
 
 const TRIAL_DAYS = 14;
 
-export function computeStatus(createdAt: string, premium: boolean): "trial" | "active" | "expired" {
+export function computeStatus(trialStart: string, premium: boolean): "trial" | "active" | "expired" {
   if (premium) return "active";
-  const trialEnd = new Date(createdAt);
+  const trialEnd = new Date(trialStart);
   trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS);
   return new Date() < trialEnd ? "trial" : "expired";
 }
 
-export function trialDaysLeft(createdAt: string): number {
-  const trialEnd = new Date(createdAt);
-  trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS);
-  return Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+export function trialDaysLeft(trialEnd: string): number {
+  const end = new Date(trialEnd);
+  return Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
 }
 
 export async function requireSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -26,7 +25,7 @@ export async function requireSubscription(req: Request, res: Response, next: Nex
   try {
     const pool = getPool();
     const result = await pool.query(
-      "SELECT premium, created_at FROM users WHERE id = $1",
+      "SELECT premium, trial_start, trial_end FROM users WHERE id = $1",
       [userId],
     );
     const user = result.rows[0];
@@ -36,7 +35,8 @@ export async function requireSubscription(req: Request, res: Response, next: Nex
       return;
     }
 
-    const status = computeStatus(user.created_at, user.premium);
+    const trialStart = typeof user.trial_start === "string" ? user.trial_start : (user.trial_start as Date).toISOString();
+    const status = computeStatus(trialStart, user.premium);
 
     if (status === "trial" || status === "active") {
       next();

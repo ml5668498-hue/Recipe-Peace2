@@ -21,15 +21,28 @@ export function getPool(): pg.Pool {
 
 export async function runMigrations(): Promise<void> {
   const pool = getPool();
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id          UUID PRIMARY KEY,
       name        TEXT NOT NULL,
       email       TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
       premium     BOOLEAN NOT NULL DEFAULT FALSE,
+      trial_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      trial_end   TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '14 days'),
       created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  const alterations = [
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_start TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end   TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '14 days')`,
+    `ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`,
+  ];
+
+  for (const sql of alterations) {
+    await pool.query(sql).catch(() => {});
+  }
+
   logger.info("Database migrations complete");
 }
