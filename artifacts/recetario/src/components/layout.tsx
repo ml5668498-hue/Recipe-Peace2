@@ -71,9 +71,16 @@ export function Layout({
                   </>
                 )}
                 {subscription?.subscription_status === "trial" && (
-                  <span className="text-xs text-muted-foreground">
-                    Hola, {user.name.split(" ")[0]} · Prueba gratis
-                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      Hola, {user.name.split(" ")[0]} · Prueba gratis
+                    </span>
+                    <span className="text-xs text-primary font-medium">
+                      {trialDaysLeft === 0
+                        ? "Tu prueba vence hoy"
+                        : `Te quedan ${trialDaysLeft} día${trialDaysLeft !== 1 ? "s" : ""} de prueba gratis`}
+                    </span>
+                  </div>
                 )}
               </div>
               <button
