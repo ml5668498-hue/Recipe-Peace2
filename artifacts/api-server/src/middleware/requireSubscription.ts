@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getSupabaseClient } from "../lib/supabase";
+import { getPool } from "../lib/db";
 
 const TRIAL_DAYS = 14;
 
@@ -24,12 +24,12 @@ export async function requireSubscription(req: Request, res: Response, next: Nex
   }
 
   try {
-    const supabase = getSupabaseClient();
-    const { data: user } = await supabase
-      .from("users")
-      .select("premium, created_at")
-      .eq("id", userId)
-      .single();
+    const pool = getPool();
+    const result = await pool.query(
+      "SELECT premium, created_at FROM users WHERE id = $1",
+      [userId],
+    );
+    const user = result.rows[0];
 
     if (!user) {
       res.status(403).json({ error: "Usuario no encontrado.", code: "no_user" });

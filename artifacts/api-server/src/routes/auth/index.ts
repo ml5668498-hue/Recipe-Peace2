@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { getSupabaseClient } from "../../lib/supabase";
+import { getPool } from "../../lib/db";
 import { requireAuth } from "../../middleware/requireAuth";
 import { computeStatus, trialDaysLeft } from "../../middleware/requireSubscription";
 
@@ -44,28 +44,29 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const { name, email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase().trim();
-  const supabase = getSupabaseClient();
+  const pool = getPool();
 
-  const { data: existing } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", normalizedEmail)
-    .single();
-
-  if (existing) {
+  const existing = await pool.query(
+    "SELECT id FROM users WHERE email = $1",
+    [normalizedEmail],
+  );
+  if (existing.rows.length > 0) {
     res.status(409).json({ error: "Este email ya está registrado. Iniciá sesión." });
     return;
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const { data: user, error } = await supabase
-    .from("users")
-    .insert({ name, email: normalizedEmail, password_hash: passwordHash, premium: false })
-    .select("id, name, email, premium, created_at")
-    .single();
-
-  if (error || !user) {
+  let user: { id: string; name: string; email: string; premium: boolean; created_at: string };
+  try {
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password_hash, premium)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, name, email, premium, created_at`,
+      [name, normalizedEmail, passwordHash, false],
+    );
+    user = result.rows[0];
+  } catch (error) {
     req.log.error({ error }, "Failed to create user");
     res.status(500).json({ error: "Error al crear el usuario." });
     return;
@@ -87,13 +88,13 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const { email, password } = parsed.data;
-  const supabase = getSupabaseClient();
+  const pool = getPool();
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id, name, email, password_hash, premium, created_at")
-    .eq("email", email.toLowerCase().trim())
-    .single();
+  const result = await pool.query(
+    "SELECT id, name, email, password_hash, premium, created_at FROM users WHERE email = $1",
+    [email.toLowerCase().trim()],
+  );
+  const user = result.rows[0];
 
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     res.status(401).json({ error: "Email o contraseña incorrectos." });
@@ -109,13 +110,13 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 });
 
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
-  const supabase = getSupabaseClient();
+  const pool = getPool();
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("id, name, email, premium, created_at")
-    .eq("id", req.userId!)
-    .single();
+  const result = await pool.query(
+    "SELECT id, name, email, premium, created_at FROM users WHERE id = $1",
+    [req.userId],
+  );
+  const user = result.rows[0];
 
   if (!user) {
     res.status(404).json({ error: "Usuario no encontrado." });
