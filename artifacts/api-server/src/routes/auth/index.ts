@@ -38,27 +38,28 @@ async function syncToSupabasePublicUsers(
   email: string,
   createdAt: string,
   trialEnd: string,
+  premium: boolean,
   log: typeof console,
 ): Promise<void> {
   const supabase = getSupabaseClient();
 
-  const attempts: Record<string, unknown>[] = [
-    { id, email, created_at: createdAt, trial_end: trialEnd, premium: false },
-    { id, email, created_at: createdAt, premium: false },
+  // Progressive fallback: drop columns until the upsert succeeds (handles missing cols)
+  const payloads: Record<string, unknown>[] = [
+    { id, email, created_at: createdAt, trial_end: trialEnd, premium },
+    { id, email, created_at: createdAt, premium },
     { id, email, created_at: createdAt },
     { id, email },
   ];
 
-  for (const payload of attempts) {
+  for (const payload of payloads) {
     const { error } = await supabase
       .from("users")
-      .upsert(payload, { onConflict: "email" });
+      .upsert(payload, { onConflict: "id" });
 
     if (!error) return;
 
-    if (error.code === "PGRST204") {
-      continue;
-    }
+    // PGRST204 = column not found → retry without that column
+    if (error.code === "PGRST204") continue;
 
     log.warn(`Supabase public.users sync failed: ${error.message}`);
     return;
@@ -122,7 +123,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     req.log.warn({ error: dbErr }, "Replit DB sync failed (non-fatal)");
   }
 
-  await syncToSupabasePublicUsers(supabaseUser.id, normalizedEmail, trialStartIso, trialEndIso, req.log as unknown as typeof console);
+  await syncToSupabasePublicUsers(supabaseUser.id, normalizedEmail, trialStartIso, trialEndIso, false, req.log as unknown as typeof console);
 
   const token = generateToken(supabaseUser.id, normalizedEmail);
 
@@ -189,6 +190,17 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       return d.toISOString();
     })();
   }
+
+  // Best-effort: ensure user exists in Supabase public.users (handles users
+  // who registered before sync was added, or if a previous sync failed)
+  syncToSupabasePublicUsers(
+    supabaseUser.id,
+    normalizedEmail,
+    trialStart,
+    trialEnd,
+    premium,
+    req.log as unknown as typeof console,
+  ).catch(() => {});
 
   const token = generateToken(supabaseUser.id, normalizedEmail);
 
