@@ -23,6 +23,7 @@ interface AuthContextValue {
   logout: () => void;
   refreshSubscription: () => Promise<void>;
   hasAccess: boolean;
+  isPremium: boolean;
   trialDaysLeft: number | null;
 }
 
@@ -112,6 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     subscription?.subscription_status === "trial" ||
     subscription?.subscription_status === "active";
 
+  const isPremium = subscription?.premium === true;
+
   const trialDaysLeft =
     subscription?.subscription_status === "trial"
       ? subscription.days_left
@@ -119,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, subscription, token, loading, login, logout, refreshSubscription, hasAccess, trialDaysLeft }}
+      value={{ user, subscription, token, loading, login, logout, refreshSubscription, hasAccess, isPremium, trialDaysLeft }}
     >
       {children}
     </AuthContext.Provider>
