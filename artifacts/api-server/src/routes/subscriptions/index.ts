@@ -1,33 +1,34 @@
 import { Router } from "express";
 import { requireAuth } from "../../middleware/requireAuth";
-import { getSupabaseClient } from "../../lib/supabase";
+import { getPool } from "../../lib/db";
 import { computeStatus, trialDaysLeft } from "../../middleware/requireSubscription";
 
 const router = Router();
 
 router.get("/subscriptions/status", requireAuth, async (req, res): Promise<void> => {
-  const supabase = getSupabaseClient();
+  const pool = getPool();
 
-  const { data: user } = await supabase
-    .from("users")
-    .select("premium, created_at")
-    .eq("id", req.userId!)
-    .single();
+  const result = await pool.query(
+    "SELECT premium, trial_start, trial_end FROM users WHERE id = $1",
+    [req.userId],
+  ).catch(() => ({ rows: [] as Array<{ premium: boolean; trial_start: Date; trial_end: Date }> }));
+
+  const user = result.rows[0];
 
   if (!user) {
     res.status(404).json({ error: "Usuario no encontrado." });
     return;
   }
 
-  const trialEnd = new Date(user.created_at);
-  trialEnd.setDate(trialEnd.getDate() + 14);
+  const trialStart = typeof user.trial_start === "string" ? user.trial_start : (user.trial_start as Date).toISOString();
+  const trialEnd   = typeof user.trial_end   === "string" ? user.trial_end   : (user.trial_end   as Date).toISOString();
 
   res.json({
-    subscription_status: computeStatus(user.created_at, user.premium),
+    subscription_status: computeStatus(trialEnd, user.premium),
     premium: user.premium,
-    trial_start: user.created_at,
-    trial_end: trialEnd.toISOString(),
-    days_left: trialDaysLeft(user.created_at),
+    trial_start: trialStart,
+    trial_end: trialEnd,
+    days_left: trialDaysLeft(trialEnd),
   });
 });
 
