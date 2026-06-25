@@ -36,13 +36,23 @@ export async function runMigrations(): Promise<void> {
 
   const alterations = [
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_start TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
-    `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end   TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '14 days')`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end   TIMESTAMPTZ`,
     `ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`,
   ];
 
   for (const sql of alterations) {
     await pool.query(sql).catch(() => {});
   }
+
+  await pool.query(`
+    UPDATE users
+    SET trial_end = trial_start + INTERVAL '14 days'
+    WHERE trial_end IS NULL
+  `).catch(() => {});
+
+  await pool.query(`
+    ALTER TABLE users ALTER COLUMN trial_end SET NOT NULL
+  `).catch(() => {});
 
   logger.info("Database migrations complete");
 }

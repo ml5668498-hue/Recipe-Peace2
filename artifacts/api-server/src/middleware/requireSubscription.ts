@@ -1,13 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { getPool } from "../lib/db";
 
-const TRIAL_DAYS = 14;
-
-export function computeStatus(trialStart: string, premium: boolean): "trial" | "active" | "expired" {
+export function computeStatus(trialEnd: string, premium: boolean): "trial" | "active" | "expired" {
   if (premium) return "active";
-  const trialEnd = new Date(trialStart);
-  trialEnd.setDate(trialEnd.getDate() + TRIAL_DAYS);
-  return new Date() < trialEnd ? "trial" : "expired";
+  return new Date() < new Date(trialEnd) ? "trial" : "expired";
 }
 
 export function trialDaysLeft(trialEnd: string): number {
@@ -35,8 +31,8 @@ export async function requireSubscription(req: Request, res: Response, next: Nex
       return;
     }
 
-    const trialStart = typeof user.trial_start === "string" ? user.trial_start : (user.trial_start as Date).toISOString();
-    const status = computeStatus(trialStart, user.premium);
+    const trialEnd = typeof user.trial_end === "string" ? user.trial_end : (user.trial_end as Date).toISOString();
+    const status = computeStatus(trialEnd, user.premium);
 
     if (status === "trial" || status === "active") {
       next();

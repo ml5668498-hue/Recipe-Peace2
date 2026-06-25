@@ -25,7 +25,7 @@ function generateToken(userId: string, email: string): string {
 
 function buildSubscription(trialStart: string, trialEnd: string, premium: boolean) {
   return {
-    subscription_status: computeStatus(trialStart, premium),
+    subscription_status: computeStatus(trialEnd, premium),
     premium,
     trial_start: trialStart,
     trial_end: trialEnd,
@@ -42,7 +42,7 @@ async function syncToSupabasePublicUsers(
 ): Promise<void> {
   const supabase = getSupabaseClient();
 
-  const attempts = [
+  const attempts: Record<string, unknown>[] = [
     { id, email, created_at: createdAt, trial_end: trialEnd, premium: false },
     { id, email, created_at: createdAt, premium: false },
     { id, email, created_at: createdAt },
