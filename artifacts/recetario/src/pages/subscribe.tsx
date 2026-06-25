@@ -40,10 +40,10 @@ export default function Subscribe() {
           {isExpired ? (
             <>
               <h1 className="font-serif text-2xl text-foreground text-center">
-                Tu prueba gratuita terminó
+                Tu prueba gratis terminó
               </h1>
               <p className="text-sm text-muted-foreground mt-2 text-center max-w-[280px]">
-                Próximamente podrás suscribirte al Plan Premium para seguir cocinando con calma.
+                Activá Premium para seguir cocinando con calma sin interrupciones.
               </p>
             </>
           ) : (
@@ -96,9 +96,15 @@ export default function Subscribe() {
           </p>
         </div>
 
-        <Button disabled className="w-full h-12 rounded-xl opacity-50 cursor-not-allowed mb-4">
-          Suscribirme con Mercado Pago — Próximamente
-        </Button>
+        {isExpired ? (
+          <Button disabled className="w-full h-12 rounded-xl mb-4">
+            Activar Premium
+          </Button>
+        ) : (
+          <Button disabled className="w-full h-12 rounded-xl opacity-50 cursor-not-allowed mb-4">
+            Suscribirme con Mercado Pago — Próximamente
+          </Button>
+        )}
 
         <button
           onClick={handleLogout}
