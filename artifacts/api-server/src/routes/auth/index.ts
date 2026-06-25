@@ -33,6 +33,54 @@ function buildSubscription(trialStart: string, trialEnd: string, premium: boolea
   };
 }
 
+/**
+ * Read subscription fields from Supabase public.users.
+ * This is the admin-editable source of truth for trial_end and premium.
+ * Returns null if the row doesn't exist or columns are missing.
+ */
+async function readSupabaseSubscription(id: string): Promise<{
+  trial_end: string;
+  premium: boolean;
+  created_at: string;
+} | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("trial_end, premium, created_at")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+
+  const raw = data as Record<string, unknown>;
+  if (!raw["trial_end"]) return null;
+
+  return {
+    trial_end: String(raw["trial_end"]),
+    premium: Boolean(raw["premium"] ?? false),
+    created_at: String(raw["created_at"] ?? new Date().toISOString()),
+  };
+}
+
+/**
+ * Write trial_end and premium back to Replit Postgres so requireSubscription
+ * middleware (which reads Replit Postgres) stays in sync with Supabase changes.
+ */
+async function syncReplitDb(
+  id: string,
+  trialEnd: string,
+  premium: boolean,
+  log: typeof console,
+): Promise<void> {
+  const pool = getPool();
+  await pool
+    .query(
+      `UPDATE users SET trial_end = $1, premium = $2 WHERE id = $3`,
+      [trialEnd, premium, id],
+    )
+    .catch((err: unknown) => log.warn(`Replit DB sync failed: ${String(err)}`));
+}
+
 async function syncToSupabasePublicUsers(
   id: string,
   email: string,
@@ -164,43 +212,42 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   };
 
   const pool = getPool();
+
+  // 1. Supabase public.users is the admin-editable source of truth for
+  //    trial_end and premium — read it first so admin changes take effect
+  //    immediately on the next login.
+  const supa = await readSupabaseSubscription(supabaseUser.id);
+
+  // 2. Replit Postgres holds name + trial_start (not in Supabase public.users)
   const dbResult = await pool.query(
     "SELECT id, name, email, premium, trial_start, trial_end FROM users WHERE id = $1",
     [supabaseUser.id],
   ).catch(() => ({ rows: [] as Array<{ id: string; name: string; email: string; premium: boolean; trial_start: string; trial_end: string }> }));
 
-  let name: string;
-  let premium: boolean;
-  let trialStart: string;
-  let trialEnd: string;
+  const dbRow = dbResult.rows[0];
 
-  if (dbResult.rows.length > 0) {
-    const row = dbResult.rows[0];
-    name = row.name;
-    premium = row.premium;
-    trialStart = typeof row.trial_start === "string" ? row.trial_start : (row.trial_start as Date).toISOString();
-    trialEnd = typeof row.trial_end === "string" ? row.trial_end : (row.trial_end as Date).toISOString();
-  } else {
-    name = meta.name ?? normalizedEmail.split("@")[0];
-    premium = meta.premium ?? false;
-    trialStart = meta.trial_start ?? supabaseUser.created_at;
-    trialEnd = meta.trial_end ?? (() => {
-      const d = new Date(supabaseUser.created_at);
-      d.setDate(d.getDate() + 14);
-      return d.toISOString();
-    })();
+  const name: string = dbRow?.name ?? meta.name ?? normalizedEmail.split("@")[0];
+
+  const trialStart: string = dbRow
+    ? (typeof dbRow.trial_start === "string" ? dbRow.trial_start : (dbRow.trial_start as Date).toISOString())
+    : (meta.trial_start ?? supabaseUser.created_at);
+
+  // Supabase public.users wins for trial_end + premium (admin can edit there)
+  const trialEnd: string = supa?.trial_end
+    ?? (dbRow ? (typeof dbRow.trial_end === "string" ? dbRow.trial_end : (dbRow.trial_end as Date).toISOString()) : null)
+    ?? meta.trial_end
+    ?? (() => { const d = new Date(supabaseUser.created_at); d.setDate(d.getDate() + 14); return d.toISOString(); })();
+
+  const premium: boolean = supa?.premium
+    ?? dbRow?.premium
+    ?? meta.premium
+    ?? false;
+
+  // 3. Keep Replit Postgres in sync so requireSubscription middleware sees
+  //    the latest trial_end / premium from Supabase.
+  if (supa) {
+    syncReplitDb(supabaseUser.id, supa.trial_end, supa.premium, req.log as unknown as typeof console).catch(() => {});
   }
-
-  // Best-effort: ensure user exists in Supabase public.users (handles users
-  // who registered before sync was added, or if a previous sync failed)
-  syncToSupabasePublicUsers(
-    supabaseUser.id,
-    normalizedEmail,
-    trialStart,
-    trialEnd,
-    premium,
-    req.log as unknown as typeof console,
-  ).catch(() => {});
 
   const token = generateToken(supabaseUser.id, normalizedEmail);
 
@@ -214,47 +261,43 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   const pool = getPool();
 
-  const dbResult = await pool.query(
-    "SELECT id, name, email, premium, trial_start, trial_end FROM users WHERE id = $1",
-    [req.userId],
-  ).catch(() => ({ rows: [] as Array<{ id: string; name: string; email: string; premium: boolean; trial_start: string | Date; trial_end: string | Date }> }));
+  // Read both sources in parallel
+  const [dbResult, supa] = await Promise.all([
+    pool.query(
+      "SELECT id, name, email, premium, trial_start, trial_end FROM users WHERE id = $1",
+      [req.userId],
+    ).catch(() => ({ rows: [] as Array<{ id: string; name: string; email: string; premium: boolean; trial_start: string | Date; trial_end: string | Date }> })),
+    readSupabaseSubscription(req.userId!),
+  ]);
 
-  if (dbResult.rows.length > 0) {
-    const user = dbResult.rows[0];
-    const trialStart = typeof user.trial_start === "string" ? user.trial_start : (user.trial_start as Date).toISOString();
-    const trialEnd = typeof user.trial_end === "string" ? user.trial_end : (user.trial_end as Date).toISOString();
-    res.json({
-      user: { id: user.id, name: user.name, email: user.email },
-      subscription: buildSubscription(trialStart, trialEnd, user.premium),
-    });
-    return;
-  }
+  const dbRow = dbResult.rows[0];
 
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase.auth.admin.getUserById(req.userId!);
-
-  if (error || !data?.user) {
+  if (!dbRow && !supa) {
     res.status(404).json({ error: "Usuario no encontrado." });
     return;
   }
 
-  const meta = data.user.user_metadata as {
-    name?: string;
-    premium?: boolean;
-    trial_start?: string;
-    trial_end?: string;
-  };
-  const name = meta.name ?? data.user.email?.split("@")[0] ?? "Usuario";
-  const premium = meta.premium ?? false;
-  const trialStart = meta.trial_start ?? data.user.created_at;
-  const trialEnd = meta.trial_end ?? (() => {
-    const d = new Date(data.user.created_at);
-    d.setDate(d.getDate() + 14);
-    return d.toISOString();
-  })();
+  const trialStart = dbRow
+    ? (typeof dbRow.trial_start === "string" ? dbRow.trial_start : (dbRow.trial_start as Date).toISOString())
+    : supa!.created_at;
+
+  // Supabase public.users wins for trial_end + premium
+  const trialEnd = supa?.trial_end
+    ?? (dbRow ? (typeof dbRow.trial_end === "string" ? dbRow.trial_end : (dbRow.trial_end as Date).toISOString()) : null)
+    ?? (() => { const d = new Date(trialStart); d.setDate(d.getDate() + 14); return d.toISOString(); })();
+
+  const premium = supa?.premium ?? dbRow?.premium ?? false;
+
+  const name = dbRow?.name ?? dbRow?.email?.split("@")[0] ?? "Usuario";
+  const email = dbRow?.email ?? req.userId!;
+
+  // Sync Replit Postgres if Supabase has newer values
+  if (supa) {
+    syncReplitDb(req.userId!, supa.trial_end, supa.premium, req.log as unknown as typeof console).catch(() => {});
+  }
 
   res.json({
-    user: { id: data.user.id, name, email: data.user.email },
+    user: { id: req.userId!, name, email },
     subscription: buildSubscription(trialStart, trialEnd, premium),
   });
 });
