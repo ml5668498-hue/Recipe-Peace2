@@ -46,7 +46,7 @@ export function Layout({
   showBack?: boolean;
 }) {
   const [location] = useLocation();
-  const { user, subscription, logout, trialDaysLeft } = useAuth();
+  const { user, subscription, logout, trialDaysLeft, isPremium } = useAuth();
   const isHome = location === "/";
 
   const handleLogout = () => {
@@ -64,13 +64,12 @@ export function Layout({
           user && (
             <div className="px-5 pt-5 pb-1 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                {subscription?.subscription_status === "active" && (
+                {isPremium ? (
                   <>
                     <Crown size={13} className="text-primary" />
                     <span className="text-xs font-semibold text-primary">Premium</span>
                   </>
-                )}
-                {subscription?.subscription_status === "trial" && (
+                ) : subscription?.subscription_status === "trial" ? (
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs text-muted-foreground">
                       Hola, {user.name.split(" ")[0]} · Prueba gratis
@@ -81,7 +80,7 @@ export function Layout({
                         : `Te quedan ${trialDaysLeft} día${trialDaysLeft !== 1 ? "s" : ""} de prueba gratis`}
                     </span>
                   </div>
-                )}
+                ) : null}
               </div>
               <button
                 onClick={handleLogout}
