@@ -1,26 +1,14 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { Utensils, CalendarDays, ShoppingBag, Sparkles, Lock, Zap, BookHeart } from "lucide-react";
+import { Utensils, CalendarDays, ShoppingBag, Sparkles, Lock, Zap, BookHeart, Crown } from "lucide-react";
 import { RecetarioLogo } from "@/components/logo";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { useRecetario } from "@/hooks/use-recetario";
-
-async function fetchPlanMode(): Promise<{ mode: "free" | "premium" }> {
-  const res = await fetch("/api/plan");
-  if (!res.ok) return { mode: "free" };
-  return res.json();
-}
+import { useAuth } from "@/context/auth";
 
 export default function Home() {
-  const { data: plan } = useQuery({
-    queryKey: ["plan-mode"],
-    queryFn: fetchPlanMode,
-    staleTime: 60_000,
-  });
-
+  const { isPremium } = useAuth();
   const { favorites, entries } = useRecetario();
-  const isPremium = plan?.mode === "premium";
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -42,15 +30,14 @@ export default function Home() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="mb-8 flex flex-col items-center"
         >
-          {/* Premium badge — top right of icon */}
           <div className="relative mb-4">
             <RecetarioLogo size={72} />
-            <Link href="/premium">
-              <span className="absolute -top-1 -right-2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer hover:bg-primary/90 transition-colors shadow-sm">
-                <Sparkles size={9} strokeWidth={2.5} />
+            {isPremium && (
+              <span className="absolute -top-1 -right-2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                <Crown size={9} strokeWidth={2.5} />
                 Premium
               </span>
-            </Link>
+            )}
           </div>
 
           <h1 className="text-4xl font-serif font-medium text-foreground tracking-tight mb-3 text-center">
@@ -61,53 +48,56 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Plan mode banner */}
+        {/* Account status banner */}
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          className={`mb-6 rounded-2xl border overflow-hidden shadow-sm ${
-            isPremium ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card"
-          }`}
+          className="mb-6"
         >
-          <div
-            className={`flex items-center gap-3 px-5 py-3 border-b ${
-              isPremium ? "bg-primary/10 border-primary/20" : "bg-secondary/20 border-border/40"
-            }`}
-          >
-            <div className={`w-2 h-2 rounded-full ${isPremium ? "bg-primary" : "bg-muted-foreground/40"}`} />
-            <span className="text-sm font-medium text-foreground/70">
-              {isPremium ? "IA personalizada activa" : "Modo gratis activo"}
-            </span>
-          </div>
-          <div className="px-5 py-4 flex items-start gap-4">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                isPremium ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
-              }`}
-            >
-              {isPremium ? <Zap size={18} strokeWidth={1.5} /> : <Sparkles size={18} strokeWidth={1.5} />}
+          {isPremium ? (
+            /* ── Premium banner ── */
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 overflow-hidden shadow-sm">
+              <div className="flex items-center gap-3 px-5 py-3 border-b bg-primary/10 border-primary/20">
+                <Crown size={13} className="text-primary" strokeWidth={2.5} />
+                <span className="text-sm font-semibold text-primary">Cuenta Premium activa</span>
+              </div>
+              <div className="px-5 py-4 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                  <Zap size={18} strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    Tenés acceso completo: favoritos, historial, planner semanal y lista de compras automática.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              {isPremium ? (
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  Groq IA genera recetas, menús y planners personalizados para vos en segundos.
-                </p>
-              ) : (
-                <>
+          ) : (
+            /* ── Trial banner ── */
+            <div className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
+              <div className="flex items-center gap-3 px-5 py-3 border-b bg-secondary/20 border-border/40">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                <span className="text-sm font-medium text-foreground/70">Modo gratis activo</span>
+              </div>
+              <div className="px-5 py-4 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                  <Sparkles size={18} strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-                    Estás usando recetas de nuestra base interna. Con IA personalizada, las recetas y menús se crean especialmente para vos.
+                    Podés generar recetas y menús. Funciones Premium disponibles al actualizar.
                   </p>
                   <Link href="/premium">
                     <button className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 transition-colors px-4 py-2 rounded-xl border border-primary/20">
                       <Lock size={14} strokeWidth={2} />
-                      Desbloquear IA personalizada
+                      Ver funciones Premium
                     </button>
                   </Link>
-                </>
-              )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </motion.div>
 
         {/* Module cards */}
