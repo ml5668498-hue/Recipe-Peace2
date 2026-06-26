@@ -31,9 +31,28 @@ export interface Recipe {
   antiAnxietyTip: string;
 }
 
+/**
+ * @nullable
+ */
+export type RecipeInputObjetivo = typeof RecipeInputObjetivo[keyof typeof RecipeInputObjetivo] | null;
+
+
+export const RecipeInputObjetivo = {
+  rapido: 'rapido',
+  economico: 'economico',
+  familiar: 'familiar',
+  saludable: 'saludable',
+  sin_harinas: 'sin_harinas',
+  sin_azucar: 'sin_azucar',
+  para_ansiedad: 'para_ansiedad',
+  cena_liviana: 'cena_liviana',
+} as const;
+
 export interface RecipeInput {
   /** @minItems 1 */
   ingredients: string[];
+  /** @nullable */
+  objetivo?: RecipeInputObjetivo;
 }
 
 export interface RecipeList {

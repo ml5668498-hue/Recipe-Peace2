@@ -5,6 +5,17 @@ import { fallbackGenerateRecipes } from "../../lib/fallback-generator";
 
 const router: IRouter = Router();
 
+const OBJETIVO_LABELS: Record<string, string> = {
+  rapido: "rápida de preparar (máximo 15 minutos)",
+  economico: "económica, con ingredientes baratos y accesibles",
+  familiar: "apta para toda la familia, incluyendo niños",
+  saludable: "nutritiva y saludable, balanceada",
+  sin_harinas: "sin harinas ni cereales",
+  sin_azucar: "sin azúcar ni endulzantes",
+  para_ansiedad: "especialmente reconfortante y anti ansiedad, con texturas cálidas",
+  cena_liviana: "liviana para cenar, baja en calorías y fácil de digerir",
+};
+
 function getGroqClient(): OpenAI | null {
   if (!process.env.GROQ_API_KEY) return null;
   return new OpenAI({
@@ -20,7 +31,7 @@ router.post("/recipes/generate", async (req, res): Promise<void> => {
     return;
   }
 
-  const { ingredients } = parsed.data;
+  const { ingredients, objetivo } = parsed.data;
   const groq = getGroqClient();
 
   if (!groq) {
@@ -30,8 +41,12 @@ router.post("/recipes/generate", async (req, res): Promise<void> => {
     return;
   }
 
+  const objetivoClause = objetivo && OBJETIVO_LABELS[objetivo]
+    ? `\nObjetivo especial del usuario: cada receta debe ser ${OBJETIVO_LABELS[objetivo]}.`
+    : "";
+
   try {
-    const prompt = `Eres un chef amable especializado en cocina anti ansiedad alimentaria. El usuario tiene estos ingredientes disponibles: ${ingredients.join(", ")}.
+    const prompt = `Eres un chef amable especializado en cocina anti ansiedad alimentaria. El usuario tiene estos ingredientes disponibles: ${ingredients.join(", ")}.${objetivoClause}
 
 Genera exactamente 3 recetas usando principalmente esos ingredientes. Responde ÚNICAMENTE con un JSON válido (sin texto adicional) con este formato exacto:
 
@@ -52,7 +67,7 @@ Reglas:
 - difficulty debe ser exactamente "Fácil", "Medio" o "Difícil"
 - Los pasos deben ser simples, claros y sin tecnicismos
 - El antiAnxietyTip debe ser cálido, breve y reconfortante
-- Máximo 6 pasos por receta`;
+- Máximo 6 pasos por receta${objetivo ? "\n- Respeta estrictamente el objetivo especial indicado en las 3 recetas" : ""}`;
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",

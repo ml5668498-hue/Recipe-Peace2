@@ -176,6 +176,9 @@ components:
           items:
             type: string
           minItems: 1
+        objetivo:
+          type: ["string", "null"]
+          enum: ["rapido", "economico", "familiar", "saludable", "sin_harinas", "sin_azucar", "para_ansiedad", "cena_liviana", null]
       required:
         - ingredients
 

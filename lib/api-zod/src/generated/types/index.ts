@@ -24,5 +24,6 @@ export * from './plannerResult';
 export * from './recipe';
 export * from './recipeDifficulty';
 export * from './recipeInput';
+export * from './recipeInputObjetivo';
 export * from './recipeList';
 export * from './shoppingCategory';

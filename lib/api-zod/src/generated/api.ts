@@ -23,7 +23,8 @@ export const HealthCheckResponse = zod.object({
 
 
 export const GenerateRecipesBody = zod.object({
-  "ingredients": zod.array(zod.string()).min(1)
+  "ingredients": zod.array(zod.string()).min(1),
+  "objetivo": zod.union([zod.literal('rapido'),zod.literal('economico'),zod.literal('familiar'),zod.literal('saludable'),zod.literal('sin_harinas'),zod.literal('sin_azucar'),zod.literal('para_ansiedad'),zod.literal('cena_liviana'),zod.literal(null)]).nullish()
 })
 
 export const GenerateRecipesResponse = zod.object({

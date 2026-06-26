@@ -12,6 +12,8 @@ import {
   Clock,
 } from "lucide-react";
 import { useRecetario, type SavedEntry } from "@/hooks/use-recetario";
+import { PremiumGate } from "@/components/premium-gate";
+import { useAuth } from "@/context/auth";
 
 type Tab = "favoritos" | "historial";
 
@@ -37,8 +39,6 @@ function typeLabel(type: SavedEntry["type"]) {
   if (type === "menu") return "Menú";
   return "Planner";
 }
-
-// ── Preview content per type ──────────────────────────────────────
 
 function RecipePreview({ entry }: { entry: Extract<SavedEntry, { type: "recipe" }> }) {
   const r = entry.data;
@@ -112,8 +112,6 @@ function PlannerPreview({ entry }: { entry: Extract<SavedEntry, { type: "planner
   );
 }
 
-// ── Entry card ────────────────────────────────────────────────────
-
 function EntryCard({
   entry,
   onToggleFavorite,
@@ -133,11 +131,7 @@ function EntryCard({
       exit={{ opacity: 0, scale: 0.97 }}
       className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm"
     >
-      {/* Card header — always visible */}
-      <button
-        className="w-full text-left px-5 pt-5 pb-4"
-        onClick={() => setExpanded((v) => !v)}
-      >
+      <button className="w-full text-left px-5 pt-5 pb-4" onClick={() => setExpanded((v) => !v)}>
         <div className="flex items-start gap-3">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${typeColor(entry.type)}`}>
             {typeIcon(entry.type)}
@@ -145,9 +139,7 @@ function EntryCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-xs font-medium text-muted-foreground">{typeLabel(entry.type)}</span>
-              {entry.isFavorite && (
-                <Star size={11} className="text-primary fill-primary" />
-              )}
+              {entry.isFavorite && <Star size={11} className="text-primary fill-primary" />}
             </div>
             <p className="font-serif text-[17px] font-medium text-foreground leading-snug truncate">{entry.title}</p>
             <div className="flex items-center gap-1.5 mt-1.5 text-muted-foreground">
@@ -163,7 +155,6 @@ function EntryCard({
         </div>
       </button>
 
-      {/* Expandable preview */}
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
@@ -182,7 +173,6 @@ function EntryCard({
         )}
       </AnimatePresence>
 
-      {/* Actions footer */}
       <div className="border-t border-border/40 flex">
         <button
           onClick={() => onToggleFavorite(entry.id)}
@@ -208,61 +198,86 @@ function EntryCard({
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────
-
 export default function MyRecetario() {
   const [tab, setTab] = useState<Tab>("favoritos");
   const { entries, favorites, toggleFavorite, deleteEntry } = useRecetario();
+  const { isPremium } = useAuth();
 
   const displayed = tab === "favoritos" ? favorites : entries;
 
   return (
     <Layout title="Mi Recetario">
       <div className="flex-1 flex flex-col p-6">
-        {/* Tab switcher */}
-        <div className="flex gap-2 mb-6 bg-muted/40 rounded-xl p-1">
-          {(["favoritos", "historial"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all capitalize ${
-                tab === t
-                  ? "bg-card shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t === "favoritos" ? `Favoritos${favorites.length ? ` (${favorites.length})` : ""}` : `Historial${entries.length ? ` (${entries.length})` : ""}`}
-            </button>
-          ))}
-        </div>
-
-        {/* Entry list */}
-        {displayed.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col items-center justify-center text-center opacity-60 mt-8"
-          >
-            <BookHeart size={48} strokeWidth={1} className="mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground text-sm max-w-[220px]">
-              {tab === "favoritos"
-                ? "Todavía no tienes favoritos. Guarda una receta o menú con la estrella."
-                : "El historial está vacío. Genera recetas, menús o planners para verlos aquí."}
-            </p>
-          </motion.div>
-        ) : (
-          <div className="flex flex-col gap-3 pb-8">
-            <AnimatePresence mode="popLayout">
-              {displayed.map((entry) => (
-                <EntryCard
-                  key={entry.id}
-                  entry={entry}
-                  onToggleFavorite={toggleFavorite}
-                  onDelete={deleteEntry}
-                />
+        {isPremium ? (
+          <>
+            <div className="flex gap-2 mb-6 bg-muted/40 rounded-xl p-1">
+              {(["favoritos", "historial"] as Tab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all capitalize ${
+                    tab === t
+                      ? "bg-card shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t === "favoritos"
+                    ? `Favoritos${favorites.length ? ` (${favorites.length})` : ""}`
+                    : `Historial${entries.length ? ` (${entries.length})` : ""}`}
+                </button>
               ))}
-            </AnimatePresence>
-          </div>
+            </div>
+
+            {displayed.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex-1 flex flex-col items-center justify-center text-center opacity-60 mt-8"
+              >
+                <BookHeart size={48} strokeWidth={1} className="mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground text-sm max-w-[220px]">
+                  {tab === "favoritos"
+                    ? "Todavía no tenés favoritos. Guardá una receta o menú con la estrella."
+                    : "El historial está vacío. Generá recetas, menús o planners para verlos aquí."}
+                </p>
+              </motion.div>
+            ) : (
+              <div className="flex flex-col gap-3 pb-8">
+                <AnimatePresence mode="popLayout">
+                  {displayed.map((entry) => (
+                    <EntryCard
+                      key={entry.id}
+                      entry={entry}
+                      onToggleFavorite={toggleFavorite}
+                      onDelete={deleteEntry}
+                    />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </>
+        ) : (
+          <PremiumGate message="Favoritos e Historial son funciones Premium">
+            <div className="space-y-4">
+              <div className="flex gap-2 bg-muted/40 rounded-xl p-1">
+                <div className="flex-1 py-2.5 rounded-lg text-sm font-medium text-center bg-card shadow-sm text-foreground">
+                  Favoritos (3)
+                </div>
+                <div className="flex-1 py-2.5 rounded-lg text-sm font-medium text-center text-muted-foreground">
+                  Historial (12)
+                </div>
+              </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-card border border-border/60 rounded-2xl p-5 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-secondary/30 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted/50 rounded-lg w-3/4" />
+                    <div className="h-3 bg-muted/30 rounded-lg w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </PremiumGate>
         )}
       </div>
     </Layout>

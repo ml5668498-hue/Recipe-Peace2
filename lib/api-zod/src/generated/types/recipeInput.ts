@@ -5,8 +5,11 @@
  * Recetario de la Paz API
  * OpenAPI spec version: 0.1.0
  */
+import type { RecipeInputObjetivo } from './recipeInputObjetivo';
 
 export interface RecipeInput {
   /** @minItems 1 */
   ingredients: string[];
+  /** @nullable */
+  objetivo?: RecipeInputObjetivo;
 }

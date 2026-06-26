@@ -4,24 +4,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGenerateRecipes } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Leaf, Clock, X, ChefHat, Star } from "lucide-react";
+import { Loader2, Leaf, Clock, X, ChefHat, Star, Lock, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRecetario } from "@/hooks/use-recetario";
+import { useAuth } from "@/context/auth";
+import { Link } from "wouter";
+
+type Objetivo = "rapido" | "economico" | "familiar" | "saludable" | "sin_harinas" | "sin_azucar" | "para_ansiedad" | "cena_liviana";
+
+const OBJETIVOS: { value: Objetivo; label: string }[] = [
+  { value: "rapido", label: "Rápida" },
+  { value: "economico", label: "Económica" },
+  { value: "familiar", label: "Familiar" },
+  { value: "saludable", label: "Saludable" },
+  { value: "sin_harinas", label: "Sin harinas" },
+  { value: "sin_azucar", label: "Sin azúcar" },
+  { value: "para_ansiedad", label: "Anti ansiedad" },
+  { value: "cena_liviana", label: "Cena liviana" },
+];
 
 export default function Recipes() {
   const [ingredientInput, setIngredientInput] = useState("");
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
   const [savedIds, setSavedIds] = useState<string[]>([]);
 
+  const { isPremium } = useAuth();
   const generateRecipes = useGenerateRecipes();
   const { addRecipes, toggleFavorite, entries } = useRecetario();
 
   const prevSuccess = useRef(false);
 
-  // Auto-save all recipes to history when a new generation completes
   useEffect(() => {
     if (generateRecipes.isSuccess && generateRecipes.data && !prevSuccess.current) {
-      const ids = addRecipes(generateRecipes.data.recipes as any);
+      const ids = addRecipes(generateRecipes.data.recipes as never[]);
       setSavedIds(ids);
       prevSuccess.current = true;
     }
@@ -45,7 +61,12 @@ export default function Recipes() {
   const handleGenerate = () => {
     if (ingredients.length === 0) return;
     setSavedIds([]);
-    generateRecipes.mutate({ data: { ingredients } });
+    generateRecipes.mutate({
+      data: {
+        ingredients,
+        ...(isPremium && objetivo ? { objetivo } : {}),
+      },
+    });
   };
 
   const isFavorite = (index: number) => {
@@ -57,9 +78,9 @@ export default function Recipes() {
   return (
     <Layout title="¿Qué cocino con lo que tengo?">
       <div className="flex-1 flex flex-col p-6">
-        <div className="mb-8">
+        <div className="mb-6">
           <p className="text-muted-foreground text-[15px] leading-relaxed mb-6">
-            Anota los ingredientes que tienes a mano. No te preocupes si son pocos, encontraremos algo reconfortante para preparar.
+            Anotá los ingredientes que tenés a mano. No te preocupes si son pocos, encontraremos algo reconfortante.
           </p>
 
           <div className="flex gap-2 mb-4">
@@ -104,6 +125,61 @@ export default function Recipes() {
           </div>
         </div>
 
+        {/* Objetivo selector — premium feature */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Target size={15} className={isPremium ? "text-primary" : "text-muted-foreground"} />
+            <p className="text-sm font-medium text-foreground">
+              Objetivo de la receta
+            </p>
+            {!isPremium && (
+              <span className="inline-flex items-center gap-1 text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                <Lock size={9} strokeWidth={2.5} />
+                Premium
+              </span>
+            )}
+          </div>
+
+          {isPremium ? (
+            <div className="flex flex-wrap gap-2">
+              {OBJETIVOS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setObjetivo(objetivo === value ? null : value)}
+                  className={`text-sm px-3 py-1.5 rounded-xl border transition-all ${
+                    objetivo === value
+                      ? "bg-primary text-primary-foreground border-primary font-medium"
+                      : "bg-card text-foreground/70 border-border/60 hover:border-primary/40 hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="flex flex-wrap gap-2 pointer-events-none select-none opacity-40">
+                {OBJETIVOS.map(({ value, label }) => (
+                  <span
+                    key={value}
+                    className="text-sm px-3 py-1.5 rounded-xl border bg-card text-foreground/70 border-border/60"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Link href="/premium">
+                  <button className="flex items-center gap-2 bg-card border border-primary/30 text-primary text-xs font-medium px-4 py-2 rounded-xl shadow-sm hover:bg-primary/5 transition-colors">
+                    <Lock size={11} strokeWidth={2} />
+                    Disponible en Premium
+                  </button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
         <Button
           onClick={handleGenerate}
           disabled={ingredients.length === 0 || generateRecipes.isPending}
@@ -142,7 +218,6 @@ export default function Recipes() {
                       <h4 className="font-serif text-[19px] font-medium text-foreground leading-snug">
                         {recipe.name}
                       </h4>
-                      {/* Star / Favorite button */}
                       {savedIds[index] && (
                         <button
                           onClick={() => toggleFavorite(savedIds[index])}
