@@ -60,7 +60,7 @@ export type SavedEntry =
   | { id: string; type: "menu"; savedAt: number; isFavorite: boolean; title: string; data: { days: MenuDay[] } }
   | { id: string; type: "planner"; savedAt: number; isFavorite: boolean; title: string; data: PlannerData };
 
-// ── Local storage helpers ─────────────────────────────────────────
+// ── Local storage (non-premium) ───────────────────────────────────
 
 const STORAGE_KEY = "recetario_v1";
 const MAX_NON_FAVORITES = 20;
@@ -69,7 +69,7 @@ function newId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-function load(): SavedEntry[] {
+function loadLocal(): SavedEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as SavedEntry[]) : [];
@@ -78,142 +78,122 @@ function load(): SavedEntry[] {
   }
 }
 
-function persist(entries: SavedEntry[]) {
+function persistLocal(entries: SavedEntry[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   } catch {
-    // storage full — ignore
+    // storage full
   }
 }
 
 function trim(entries: SavedEntry[]): SavedEntry[] {
   const sorted = [...entries].sort((a, b) => b.savedAt - a.savedAt);
-  const favorites = sorted.filter((e) => e.isFavorite);
+  const favs = sorted.filter((e) => e.isFavorite);
   const rest = sorted.filter((e) => !e.isFavorite).slice(0, MAX_NON_FAVORITES);
-  return [...favorites, ...rest].sort((a, b) => b.savedAt - a.savedAt);
+  return [...favs, ...rest].sort((a, b) => b.savedAt - a.savedAt);
 }
 
-// ── API helpers (used for premium users) ─────────────────────────
+// ── Cloud API helpers (premium — Supabase via API server) ─────────
 
 const BASE = (import.meta.env.BASE_URL ?? "").replace(/\/$/, "");
 
-function rowToEntry(row: Record<string, unknown>): SavedEntry {
-  return {
-    id: row.id as string,
-    type: row.type as SavedEntry["type"],
-    title: row.title as string,
-    data: row.data as never,
-    isFavorite: row.isFavorite as boolean,
-    savedAt: row.savedAt as number,
-  };
-}
-
-async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
-  return fetch(`${BASE}${path}`, options);
-}
-
-async function apiListEntries(): Promise<SavedEntry[]> {
+async function apiGet<T>(path: string): Promise<T | null> {
   try {
-    const r = await apiFetch("/api/entries");
-    if (!r.ok) return [];
-    const { entries } = (await r.json()) as { entries: Record<string, unknown>[] };
-    return entries.map(rowToEntry);
-  } catch {
-    return [];
-  }
-}
-
-async function apiSaveEntry(
-  type: string,
-  title: string,
-  data: unknown
-): Promise<string | null> {
-  try {
-    const r = await apiFetch("/api/entries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, title, data }),
-    });
+    const r = await fetch(`${BASE}${path}`);
     if (!r.ok) return null;
-    const row = (await r.json()) as { id: string };
-    return row.id;
+    return (await r.json()) as T;
   } catch {
     return null;
   }
 }
 
-async function apiToggleFavorite(id: string): Promise<void> {
+async function apiPost<T>(path: string, body: unknown): Promise<T | null> {
   try {
-    await apiFetch(`/api/entries/${id}/favorite`, { method: "PATCH" });
-  } catch {
-    // silent
-  }
-}
-
-async function apiDeleteEntry(id: string): Promise<void> {
-  try {
-    await apiFetch(`/api/entries/${id}`, { method: "DELETE" });
-  } catch {
-    // silent
-  }
-}
-
-async function apiUpdateEntry(id: string, data: unknown, title?: string): Promise<void> {
-  try {
-    await apiFetch(`/api/entries/${id}`, {
-      method: "PUT",
+    const r = await fetch(`${BASE}${path}`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data, title }),
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function apiPatch(path: string, body?: unknown): Promise<void> {
+  try {
+    await fetch(`${BASE}${path}`, {
+      method: "PATCH",
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
     // silent
   }
+}
+
+async function apiPut(path: string, body: unknown): Promise<void> {
+  try {
+    await fetch(`${BASE}${path}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    // silent
+  }
+}
+
+async function apiDelete(path: string): Promise<void> {
+  try {
+    await fetch(`${BASE}${path}`, { method: "DELETE" });
+  } catch {
+    // silent
+  }
+}
+
+// Fetch all premium entries: history + planners merged
+async function cloudLoadAll(): Promise<SavedEntry[]> {
+  const [histResult, planResult] = await Promise.all([
+    apiGet<{ entries: SavedEntry[] }>("/api/userdata/history"),
+    apiGet<{ entries: SavedEntry[] }>("/api/userdata/planners"),
+  ]);
+  const history = histResult?.entries ?? [];
+  const planners = planResult?.entries ?? [];
+  return [...history, ...planners].sort((a, b) => b.savedAt - a.savedAt);
 }
 
 // ── Hook ─────────────────────────────────────────────────────────
 
 export function useRecetario() {
   const { isPremium } = useAuth();
-
-  // Always initialize from localStorage for instant load
-  const [entries, setEntries] = useState<SavedEntry[]>(load);
+  const [entries, setEntries] = useState<SavedEntry[]>(loadLocal);
   const cloudLoaded = useRef(false);
 
-  // For premium: fetch from API on mount and when premium state changes
+  // Load from Supabase (via API) when premium
   useEffect(() => {
-    if (!isPremium) return;
-    if (cloudLoaded.current) return;
+    if (!isPremium || cloudLoaded.current) return;
     cloudLoaded.current = true;
-    apiListEntries().then((apiEntries) => {
-      setEntries(apiEntries);
-      // Also persist locally as cache
-      persist(apiEntries);
+    cloudLoadAll().then((all) => {
+      if (all.length > 0) setEntries(all);
     });
   }, [isPremium]);
 
-  // Reset cloud-loaded flag when user loses premium (e.g. logout)
+  // Reset when user loses premium
   useEffect(() => {
     if (!isPremium) {
       cloudLoaded.current = false;
-      // Reload from localStorage
-      setEntries(load());
+      setEntries(loadLocal());
     }
   }, [isPremium]);
 
-  const commitLocal = useCallback(
-    (next: SavedEntry[]) => {
-      setEntries(next);
-      persist(next);
-    },
-    []
-  );
-
-  /** Save multiple recipes. Returns their IDs. */
+  // ── addRecipes ─────────────────────────────────────────────────
   const addRecipes = useCallback(
     async (recipes: RecipeData[]): Promise<string[]> => {
+      const now = Date.now();
+
       if (!isPremium) {
-        // Local-only path
-        const now = Date.now();
         const newEntries: SavedEntry[] = recipes.map((r) => ({
           id: newId("r"),
           type: "recipe" as const,
@@ -222,82 +202,56 @@ export function useRecetario() {
           title: r.name,
           data: r,
         }));
-        const current = load();
+        const current = loadLocal();
         const next = trim([...newEntries, ...current]);
-        commitLocal(next);
+        persistLocal(next);
+        setEntries(next);
         return newEntries.map((e) => e.id);
       }
 
-      // Premium: optimistic local insert, then sync to API
-      const now = Date.now();
-      const tempEntries: SavedEntry[] = recipes.map((r) => ({
-        id: newId("r"),
-        type: "recipe" as const,
-        savedAt: now,
-        isFavorite: false,
-        title: r.name,
-        data: r,
-      }));
+      // Premium: save to Supabase recipe_history (bulk)
+      const result = await apiPost<{ ids: string[] }>("/api/userdata/history", {
+        recipes,
+      });
 
-      // Optimistic update for immediate UI
-      setEntries((prev) => trim([...tempEntries, ...prev]));
+      const ids = result?.ids ?? [];
 
-      // Save each to API and collect server IDs
-      const serverIds = await Promise.all(
-        recipes.map((r) => apiSaveEntry("recipe", r.name, r))
-      );
+      // Refresh from cloud
+      const all = await cloudLoadAll();
+      setEntries(all);
 
-      // Refresh full list from API to get canonical IDs
-      const fresh = await apiListEntries();
-      setEntries(fresh);
-      persist(fresh);
-
-      // Map temp to server IDs by position
-      return serverIds.map((id, i) => id ?? tempEntries[i].id);
+      // Map response IDs — if fewer than recipes, pad with local IDs
+      return recipes.map((_, i) => ids[i] ?? newId("r"));
     },
-    [isPremium, commitLocal]
+    [isPremium]
   );
 
-  /** Save a menu. Returns its ID. */
+  // ── addMenu (always local — no premium table for menus) ────────
   const addMenu = useCallback(
     async (days: MenuDay[], label: string): Promise<string> => {
-      if (!isPremium) {
-        const entry: SavedEntry = {
-          id: newId("m"),
-          type: "menu",
-          savedAt: Date.now(),
-          isFavorite: false,
-          title: label,
-          data: { days },
-        };
-        const current = load();
-        commitLocal(trim([entry, ...current]));
-        return entry.id;
-      }
-
-      // Premium: optimistic + API
-      const tempId = newId("m");
-      const tempEntry: SavedEntry = {
-        id: tempId,
+      const entry: SavedEntry = {
+        id: newId("m"),
         type: "menu",
         savedAt: Date.now(),
         isFavorite: false,
         title: label,
         data: { days },
       };
-      setEntries((prev) => trim([tempEntry, ...prev]));
-
-      const serverId = await apiSaveEntry("menu", label, { days });
-      const fresh = await apiListEntries();
-      setEntries(fresh);
-      persist(fresh);
-
-      return serverId ?? tempId;
+      if (!isPremium) {
+        const current = loadLocal();
+        const next = trim([entry, ...current]);
+        persistLocal(next);
+        setEntries(next);
+      } else {
+        // For premium users, keep menus local-only (no Supabase table)
+        setEntries((prev) => trim([entry, ...prev]));
+      }
+      return entry.id;
     },
-    [isPremium, commitLocal]
+    [isPremium]
   );
 
-  /** Save a planner. Returns its ID. */
+  // ── addPlanner ─────────────────────────────────────────────────
   const addPlanner = useCallback(
     async (data: PlannerData): Promise<string> => {
       if (!isPremium) {
@@ -309,33 +263,33 @@ export function useRecetario() {
           title: "Planner semanal",
           data,
         };
-        const current = load();
-        commitLocal(trim([entry, ...current]));
+        const current = loadLocal();
+        const next = trim([entry, ...current]);
+        persistLocal(next);
+        setEntries(next);
         return entry.id;
       }
 
-      const tempId = newId("p");
-      const tempEntry: SavedEntry = {
-        id: tempId,
-        type: "planner",
-        savedAt: Date.now(),
-        isFavorite: false,
-        title: "Planner semanal",
-        data,
-      };
-      setEntries((prev) => trim([tempEntry, ...prev]));
+      // Premium: save to Supabase weekly_planner
+      const result = await apiPost<{ id: string; type: string; title: string; isFavorite: boolean; savedAt: number; data: PlannerData }>(
+        "/api/userdata/planners",
+        {
+          title: "Planner semanal",
+          days: data.days,
+          shoppingList: data.shoppingList,
+          weeklySavingsMessage: data.weeklySavingsMessage,
+        }
+      );
 
-      const serverId = await apiSaveEntry("planner", "Planner semanal", data);
-      const fresh = await apiListEntries();
-      setEntries(fresh);
-      persist(fresh);
+      const all = await cloudLoadAll();
+      setEntries(all);
 
-      return serverId ?? tempId;
+      return result?.id ?? newId("p");
     },
-    [isPremium, commitLocal]
+    [isPremium]
   );
 
-  /** Update an existing entry's data (e.g. after editing planner meals). */
+  // ── updateEntry (planner editing) ─────────────────────────────
   const updateEntry = useCallback(
     async (id: string, data: unknown, title?: string): Promise<void> => {
       // Optimistic local update
@@ -346,45 +300,75 @@ export function useRecetario() {
             : e
         )
       );
+
       if (!isPremium) {
-        persist(
-          (load()).map((e) =>
-            e.id === id ? { ...e, data: data as never, ...(title ? { title } : {}) } : e
-          )
+        const local = loadLocal().map((e) =>
+          e.id === id ? { ...e, data: data as never, ...(title ? { title } : {}) } : e
         );
+        persistLocal(local);
         return;
       }
-      await apiUpdateEntry(id, data, title);
+
+      // Determine type for routing
+      const entry = entries.find((e) => e.id === id);
+      if (entry?.type === "planner") {
+        const plannerData = data as PlannerData;
+        await apiPut(`/api/userdata/planners/${id}`, {
+          days: plannerData.days,
+          shoppingList: plannerData.shoppingList,
+          weeklySavingsMessage: plannerData.weeklySavingsMessage,
+          title,
+        });
+      }
     },
-    [isPremium]
+    [isPremium, entries]
   );
 
+  // ── toggleFavorite ─────────────────────────────────────────────
   const toggleFavorite = useCallback(
     (id: string) => {
+      const entry = entries.find((e) => e.id === id);
+      if (!entry) return;
+
+      // Optimistic update
       setEntries((prev) => {
         const next = trim(prev.map((e) => (e.id === id ? { ...e, isFavorite: !e.isFavorite } : e)));
-        if (!isPremium) persist(next);
+        if (!isPremium) persistLocal(next);
         return next;
       });
-      if (isPremium) {
-        apiToggleFavorite(id);
+
+      if (!isPremium) return;
+
+      // Cloud: route based on type
+      if (entry.type === "recipe") {
+        apiPatch(`/api/userdata/history/${id}/favorite`);
+      } else if (entry.type === "planner") {
+        apiPatch(`/api/userdata/planners/${id}/favorite`);
       }
     },
-    [isPremium]
+    [isPremium, entries]
   );
 
+  // ── deleteEntry ───────────────────────────────────────────────
   const deleteEntry = useCallback(
     (id: string) => {
+      const entry = entries.find((e) => e.id === id);
+
       setEntries((prev) => {
         const next = prev.filter((e) => e.id !== id);
-        if (!isPremium) persist(next);
+        if (!isPremium) persistLocal(next);
         return next;
       });
-      if (isPremium) {
-        apiDeleteEntry(id);
+
+      if (!isPremium || !entry) return;
+
+      if (entry.type === "recipe") {
+        apiDelete(`/api/userdata/history/${id}`);
+      } else if (entry.type === "planner") {
+        apiDelete(`/api/userdata/planners/${id}`);
       }
     },
-    [isPremium]
+    [isPremium, entries]
   );
 
   return {
