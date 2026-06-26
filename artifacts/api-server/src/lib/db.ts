@@ -54,5 +54,23 @@ export async function runMigrations(): Promise<void> {
     ALTER TABLE users ALTER COLUMN trial_end SET NOT NULL
   `).catch(() => {});
 
+  // saved_entries — persists recipes, menus, planners per user
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS saved_entries (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id     UUID NOT NULL,
+      type        TEXT NOT NULL CHECK (type IN ('recipe', 'menu', 'planner')),
+      title       TEXT NOT NULL,
+      data        JSONB NOT NULL,
+      is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS saved_entries_user_id_idx ON saved_entries(user_id);
+  `).catch(() => {});
+
   logger.info("Database migrations complete");
 }

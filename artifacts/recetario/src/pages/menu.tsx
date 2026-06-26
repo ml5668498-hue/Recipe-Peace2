@@ -23,10 +23,11 @@ export default function Menu() {
 
   useEffect(() => {
     if (generateMenu.isSuccess && generateMenu.data && !prevSuccess.current) {
-      const label = type === "week" ? "Menú semanal" : "Menú del día";
-      const id = addMenu(generateMenu.data.days as any, label);
-      setSavedId(id);
       prevSuccess.current = true;
+      const label = type === "week" ? "Menú semanal" : "Menú del día";
+      addMenu(generateMenu.data.days as never[], label).then((id) => {
+        setSavedId(id);
+      });
     }
     if (!generateMenu.isSuccess) {
       prevSuccess.current = false;

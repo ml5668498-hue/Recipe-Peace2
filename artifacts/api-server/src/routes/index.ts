@@ -10,6 +10,7 @@ import waitlistRouter from "./waitlist";
 import authRouter from "./auth";
 import subscriptionsRouter from "./subscriptions";
 import webhooksRouter from "./webhooks";
+import entriesRouter from "./entries";
 
 const router: IRouter = Router();
 
@@ -25,5 +26,8 @@ router.use(subscriptionsRouter);
 router.use(requireAuth, requireSubscription, recipesRouter);
 router.use(requireAuth, requireSubscription, menuRouter);
 router.use(requireAuth, requireSubscription, plannerRouter);
+
+// Protected data routes — require auth + active subscription
+router.use(requireAuth, requireSubscription, entriesRouter);
 
 export default router;

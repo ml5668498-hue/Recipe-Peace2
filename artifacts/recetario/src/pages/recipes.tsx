@@ -37,9 +37,10 @@ export default function Recipes() {
 
   useEffect(() => {
     if (generateRecipes.isSuccess && generateRecipes.data && !prevSuccess.current) {
-      const ids = addRecipes(generateRecipes.data.recipes as never[]);
-      setSavedIds(ids);
       prevSuccess.current = true;
+      addRecipes(generateRecipes.data.recipes as never[]).then((ids) => {
+        setSavedIds(ids);
+      });
     }
     if (!generateRecipes.isSuccess) {
       prevSuccess.current = false;
