@@ -30,8 +30,8 @@ router.use(requireAuth, requireSubscription, recipesRouter);
 router.use(requireAuth, requireSubscription, menuRouter);
 router.use(requireAuth, requireSubscription, plannerRouter);
 
-// Protected data routes — require auth + active subscription
-router.use(requireAuth, requireSubscription, entriesRouter);
-router.use(requireAuth, requireSubscription, userdataRouter);
+// Data routes — only require login (no subscription gate for saving history/favorites/planner)
+router.use(requireAuth, entriesRouter);
+router.use(requireAuth, userdataRouter);
 
 export default router;
