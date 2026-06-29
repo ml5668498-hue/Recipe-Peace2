@@ -131,13 +131,18 @@ export default function Premium() {
             className="flex flex-col gap-3 mb-8"
           >
             {benefits.map((b) => (
-              <motion.div
+              <motion.button
                 key={b.title}
+                type="button"
+                onClick={() => {
+                  console.log("[Premium] benefit card clicked:", b.title);
+                  document.getElementById("waitlist-form")?.scrollIntoView({ behavior: "smooth" });
+                }}
                 variants={{
                   hidden: { opacity: 0, x: -12 },
                   show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 280, damping: 24 } },
                 }}
-                className="bg-card border border-border/60 rounded-2xl p-4 flex gap-4 items-start shadow-sm"
+                className="w-full bg-card border border-border/60 rounded-2xl p-4 flex gap-4 items-start shadow-sm text-left hover:border-primary/30 hover:shadow-md active:scale-[0.99] transition-all duration-200 cursor-pointer"
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${b.bg}`}>
                   {b.icon}
@@ -146,12 +151,13 @@ export default function Premium() {
                   <p className="font-serif text-[16px] font-medium text-foreground mb-0.5 leading-snug">{b.title}</p>
                   <p className="text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </motion.div>
 
           {/* Waitlist section */}
           <motion.div
+            id="waitlist-form"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.4 }}
@@ -233,7 +239,10 @@ export default function Premium() {
                     )}
 
                     <Button
-                      onClick={handleJoin}
+                      onClick={() => {
+                        console.log("[Premium] Unirme a Premium clicked");
+                        handleJoin();
+                      }}
                       disabled={loading}
                       className="w-full h-12 rounded-xl text-[16px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm mt-1"
                     >

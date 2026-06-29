@@ -14,6 +14,7 @@ import {
   Target,
   History,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
@@ -157,7 +158,15 @@ export default function Subscribe() {
 
             <div className="divide-y divide-border/30">
               {LOCKED_FEATURES.map(({ icon: Icon, label, desc }) => (
-                <div key={label} className="flex items-center gap-4 px-5 py-3.5">
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    console.log("[Premium] locked feature clicked:", label);
+                    setLocation("/premium");
+                  }}
+                  className="w-full flex items-center gap-4 px-5 py-3.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors cursor-pointer"
+                >
                   <div className="w-8 h-8 rounded-full bg-muted/50 text-muted-foreground flex items-center justify-center shrink-0">
                     <Lock size={13} strokeWidth={1.5} />
                   </div>
@@ -165,7 +174,8 @@ export default function Subscribe() {
                     <p className="text-sm font-medium text-foreground/70 leading-tight">{label}</p>
                     <p className="text-xs text-muted-foreground/80 mt-0.5 leading-snug">{desc}</p>
                   </div>
-                </div>
+                  <ChevronRight size={14} className="text-muted-foreground/50 shrink-0" />
+                </button>
               ))}
             </div>
 
