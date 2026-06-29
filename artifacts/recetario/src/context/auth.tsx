@@ -60,9 +60,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isApi = url.includes("/api/") && !url.includes("/api/waitlist");
 
       if (tok && isApi) {
+        // Convert Headers instance to plain object so spread works correctly.
+        // Spreading a Headers object yields {} because its entries are not
+        // enumerable via the spread operator.
+        const existing: Record<string, string> =
+          init.headers instanceof Headers
+            ? Object.fromEntries(init.headers.entries())
+            : (init.headers as Record<string, string>) ?? {};
+
         init = {
           ...init,
-          headers: { Authorization: `Bearer ${tok}`, ...(init.headers ?? {}) },
+          headers: { Authorization: `Bearer ${tok}`, ...existing },
         };
       }
 
