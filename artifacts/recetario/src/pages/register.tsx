@@ -35,14 +35,22 @@ export default function Register() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
-      const data = await res.json() as { token: string; user: User; subscription: Subscription; error?: string };
-      if (!res.ok) { setError(data.error ?? "Error al registrarse."); return; }
+      const text = await res.text();
+      let data: { token?: string; user?: User; subscription?: Subscription; error?: string } = {};
+      try { data = JSON.parse(text); } catch { /* not JSON */ }
+      if (!res.ok) {
+        setError(data.error ?? `Error del servidor (${res.status}). Intentá de nuevo.`);
+        return;
+      }
+      if (!data.token || !data.user || !data.subscription) {
+        setError("Respuesta inesperada del servidor. Intentá de nuevo.");
+        return;
+      }
       login(data.token, data.user, data.subscription);
-      // Mark as welcomed so the onboarding screen is skipped
       localStorage.setItem("recetario_welcomed", "true");
       setLocation("/");
     } catch {
-      setError("Error de conexión. Intentá de nuevo.");
+      setError("Error de conexión. Verificá tu internet e intentá de nuevo.");
     } finally {
       setLoading(false);
     }

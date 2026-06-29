@@ -1,7 +1,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { getSupabaseClient } from "../../lib/supabase";
+import { getSupabaseClient, hasServiceRole } from "../../lib/supabase";
 import { getPool } from "../../lib/db";
 import { requireAuth } from "../../middleware/requireAuth";
 import { computeStatus, trialDaysLeft } from "../../middleware/requireSubscription";
@@ -125,7 +125,15 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 
   const { name, email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase().trim();
-  const supabase = getSupabaseClient();
+
+  let supabase: ReturnType<typeof getSupabaseClient>;
+  try {
+    supabase = getSupabaseClient();
+  } catch (err) {
+    req.log.error({ err }, "Supabase not configured");
+    res.status(500).json({ error: "El servidor no está configurado correctamente. Contactá al administrador." });
+    return;
+  }
 
   const now = new Date();
   const trialEnd = new Date(now);
@@ -133,30 +141,60 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   const trialStartIso = now.toISOString();
   const trialEndIso = trialEnd.toISOString();
 
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: normalizedEmail,
-    password,
-    email_confirm: true,
-    user_metadata: {
-      name,
-      premium: false,
-      trial_start: trialStartIso,
-      trial_end: trialEndIso,
-    },
-  });
+  let supabaseUser: { id: string; created_at: string };
+  if (hasServiceRole()) {
+    // Admin path: confirms email automatically, no verification email sent.
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: normalizedEmail,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        name,
+        premium: false,
+        trial_start: trialStartIso,
+        trial_end: trialEndIso,
+      },
+    });
 
-  if (authError || !authData?.user) {
-    req.log.error({ error: authError }, "Failed to create user in Supabase Auth");
-    const msg = authError?.message ?? "";
-    if (msg.includes("already registered") || msg.includes("already been registered") || (authError as { status?: number })?.status === 422) {
-      res.status(409).json({ error: "Este email ya está registrado. Iniciá sesión." });
-    } else {
-      res.status(500).json({ error: "Error al crear el usuario." });
+    if (authError || !authData?.user) {
+      req.log.error({ error: authError }, "Failed to create user via admin API");
+      const msg = authError?.message ?? "";
+      if (msg.includes("already registered") || msg.includes("already been registered") || (authError as { status?: number })?.status === 422) {
+        res.status(409).json({ error: "Este email ya está registrado. Iniciá sesión." });
+      } else {
+        res.status(500).json({ error: `Error al crear el usuario: ${msg || "error desconocido"}` });
+      }
+      return;
     }
-    return;
+    supabaseUser = authData.user;
+  } else {
+    // Anon-key path: uses signUp (no admin privileges needed).
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          name,
+          premium: false,
+          trial_start: trialStartIso,
+          trial_end: trialEndIso,
+        },
+      },
+    });
+
+    if (signUpError || !signUpData?.user) {
+      req.log.error({ error: signUpError }, "Failed to create user via signUp");
+      const msg = signUpError?.message ?? "";
+      if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already been registered")) {
+        res.status(409).json({ error: "Este email ya está registrado. Iniciá sesión." });
+      } else {
+        res.status(500).json({ error: `Error al crear el usuario: ${msg || "error desconocido"}` });
+      }
+      return;
+    }
+    supabaseUser = signUpData.user;
   }
 
-  const supabaseUser = authData.user;
   const pool = getPool();
 
   try {
@@ -191,7 +229,15 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   const { email, password } = parsed.data;
   const normalizedEmail = email.toLowerCase().trim();
-  const supabase = getSupabaseClient();
+
+  let supabase: ReturnType<typeof getSupabaseClient>;
+  try {
+    supabase = getSupabaseClient();
+  } catch (err) {
+    req.log.error({ err }, "Supabase not configured");
+    res.status(500).json({ error: "El servidor no está configurado correctamente. Contactá al administrador." });
+    return;
+  }
 
   const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
