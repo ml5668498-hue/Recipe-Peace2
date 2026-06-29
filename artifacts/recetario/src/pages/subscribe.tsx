@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   Leaf,
@@ -130,15 +130,17 @@ export default function Subscribe() {
           </p>
         </div>
 
-        {isExpired ? (
-          <Button disabled className="w-full h-12 rounded-xl">
-            Activar Premium
-          </Button>
-        ) : (
-          <Button disabled className="w-full h-12 rounded-xl opacity-50 cursor-not-allowed">
-            Suscribirme con Mercado Pago — Próximamente
-          </Button>
-        )}
+        <Link href="/premium" className="w-full">
+          {isExpired ? (
+            <Button className="w-full h-12 rounded-xl">
+              Activar Premium
+            </Button>
+          ) : (
+            <Button className="w-full h-12 rounded-xl">
+              Anotarme para Premium
+            </Button>
+          )}
+        </Link>
 
         {/* Locked features — shown to trial users */}
         {!isExpired && (
@@ -168,13 +170,12 @@ export default function Subscribe() {
             </div>
 
             <div className="px-5 py-4 border-t border-border/40 bg-primary/3">
-              <Button
-                disabled
-                className="w-full h-11 rounded-xl text-sm font-semibold bg-primary text-primary-foreground opacity-60 cursor-not-allowed"
-              >
-                <Lock size={14} className="mr-2" />
-                Desbloquear Premium — Próximamente
-              </Button>
+              <Link href="/premium" className="w-full">
+                <Button className="w-full h-11 rounded-xl text-sm font-semibold bg-primary text-primary-foreground">
+                  <Lock size={14} className="mr-2" />
+                  Desbloquear Premium
+                </Button>
+              </Link>
             </div>
           </motion.div>
         )}
