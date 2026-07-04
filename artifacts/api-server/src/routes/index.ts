@@ -13,6 +13,7 @@ import webhooksRouter from "./webhooks";
 import entriesRouter from "./entries";
 import userdataRouter from "./userdata";
 import setupRouter from "./setup";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -24,6 +25,7 @@ router.use(authRouter);
 router.use(webhooksRouter);
 router.use(subscriptionsRouter);
 router.use(setupRouter);
+router.use(adminRouter);
 
 // Protected generation routes — require auth + active subscription
 router.use(requireAuth, requireSubscription, recipesRouter);
