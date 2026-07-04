@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Mail, Clock, RefreshCw, Loader2, Download, Lock } from "lucide-react";
+import { Users, Mail, Clock, RefreshCw, Loader2, Download, Lock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -21,6 +21,11 @@ export default function AdminWaitlist() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Grant premium form state
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantMessage, setGrantMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const formatDate = (iso: string) => {
     try {
@@ -96,6 +101,30 @@ export default function AdminWaitlist() {
     URL.revokeObjectURL(url);
   };
 
+  const handleGrantPremium = async () => {
+    if (!grantEmail.trim()) return;
+    setGrantLoading(true);
+    setGrantMessage(null);
+    try {
+      const res = await fetch(`/api/admin/grant-premium?key=${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: grantEmail.trim() }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGrantMessage({ type: "error", text: body.error ?? `Error ${res.status}` });
+        return;
+      }
+      setGrantMessage({ type: "success", text: `Premium activado para ${body.user?.email ?? grantEmail}` });
+      setGrantEmail("");
+    } catch {
+      setGrantMessage({ type: "error", text: "Error de conexión." });
+    } finally {
+      setGrantLoading(false);
+    }
+  };
+
   if (!authenticated) {
     return (
       <div className="min-h-dvh bg-background flex items-center justify-center px-6">
@@ -150,6 +179,42 @@ export default function AdminWaitlist() {
           </div>
           <p className="text-muted-foreground text-sm">Emails capturados en los formularios de registro Premium.</p>
         </div>
+
+        {/* Grant Premium */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card border border-border/60 rounded-2xl p-5 mb-6"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Crown size={16} className="text-primary" />
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Activar Premium manualmente
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="email@usuario.com"
+              value={grantEmail}
+              onChange={(e) => { setGrantEmail(e.target.value); setGrantMessage(null); }}
+              onKeyDown={(e) => e.key === "Enter" && handleGrantPremium()}
+              className="h-11 rounded-xl flex-1"
+            />
+            <Button
+              onClick={handleGrantPremium}
+              disabled={grantLoading || !grantEmail.trim()}
+              className="h-11 rounded-xl px-5 shrink-0"
+            >
+              {grantLoading ? <Loader2 size={14} className="animate-spin" /> : "Activar"}
+            </Button>
+          </div>
+          {grantMessage && (
+            <p className={`text-sm mt-2 ${grantMessage.type === "success" ? "text-secondary-foreground" : "text-destructive"}`}>
+              {grantMessage.text}
+            </p>
+          )}
+        </motion.div>
 
         {/* Stats */}
         <motion.div
