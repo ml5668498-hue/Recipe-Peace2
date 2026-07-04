@@ -24,7 +24,7 @@ router.post("/admin/grant-premium", async (req, res): Promise<void> => {
   try {
     const pool = getPool();
     const result = await pool.query(
-      "UPDATE users SET premium = TRUE WHERE email = $1 RETURNING id, name, email, premium",
+      "UPDATE users SET premium = TRUE WHERE email = $1 RETURNING id, email, premium",
       [email],
     );
 
