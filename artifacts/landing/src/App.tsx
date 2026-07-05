@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const APP_URL = "https://recetario-de-la-paz.onrender.com";
 const WHATSAPP_URL =
   "https://wa.me/549344618166?text=" +
-  encodeURIComponent("Hola! Quiero activar mi cuenta Premium de Recetario de la Paz 🙌");
+  encodeURIComponent("Hola! Quiero activar mi cuenta Premium de Recetario de la Paz");
 
 export default function App() {
   const scrollToHowItWorks = () => {
@@ -19,12 +19,10 @@ export default function App() {
   return (
     <div className="min-h-dvh bg-background text-foreground selection:bg-primary/20 overflow-x-hidden">
       <div className="max-w-[480px] mx-auto bg-white shadow-xl shadow-black/5 min-h-dvh flex flex-col relative overflow-x-hidden w-full">
-        
-        {/* Decorative background elements */}
+
         <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute top-[20%] left-0 w-72 h-72 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 pointer-events-none" />
-        
-        {/* Navigation */}
+
         <nav className="p-6 flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -35,8 +33,7 @@ export default function App() {
         </nav>
 
         <main className="flex-1 pb-20 z-10 relative">
-          
-          {/* Hero Section */}
+
           <section className="px-6 pt-8 pb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -60,7 +57,6 @@ export default function App() {
             </motion.div>
           </section>
 
-          {/* Problem Section */}
           <section className="px-6 py-16 bg-secondary/20">
             <motion.div
               initial={{ opacity: 0 }}
@@ -76,7 +72,7 @@ export default function App() {
                   "Alimentos que se vencen sin usarse",
                   "Semanas de comida desorganizadas y repetitivas"
                 ].map((problem, i) => (
-                  <motion.div 
+                  <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -10 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -94,29 +90,28 @@ export default function App() {
             </motion.div>
           </section>
 
-          {/* Solution Section */}
           <section className="px-6 py-16">
             <div className="mb-12">
               <h2 className="font-serif text-3xl mb-4">La solución: un sistema diseñado para la paz mental</h2>
             </div>
-            
+
             <div className="grid gap-6">
-              <SolutionCard 
+              <SolutionCard
                 icon={<Sparkles className="w-5 h-5 text-primary" />}
                 title="Recetas instantáneas"
                 description="ingresás tus ingredientes y recibís recetas reconfortantes al instante"
               />
-              <SolutionCard 
+              <SolutionCard
                 icon={<Heart className="w-5 h-5 text-primary" />}
                 title="Menú Anti Ansiedad"
                 description="un menú diario o semanal que elimina la carga de decidir qué comer"
               />
-              <SolutionCard 
+              <SolutionCard
                 icon={<CalendarIcon className="w-5 h-5 text-primary" />}
                 title="Planner Familiar"
                 description="organizá la semana entera con lista de compras por categorías"
               />
-              <SolutionCard 
+              <SolutionCard
                 icon={<Salad className="w-5 h-5 text-primary" />}
                 title="Ahorro Semanal"
                 description="estimación de cuánto podés ahorrar planificando tus comidas"
@@ -124,23 +119,22 @@ export default function App() {
             </div>
           </section>
 
-          {/* How It Works */}
           <section id="how-it-works" className="px-6 py-16 bg-primary/5 rounded-[2.5rem] mx-2">
             <h2 className="font-serif text-3xl mb-10 text-center">¿Cómo funciona?</h2>
             <div className="space-y-10 relative">
               <div className="absolute left-6 top-8 bottom-8 w-px bg-primary/20" />
-              
-              <Step 
+
+              <Step
                 number="1"
                 title="Escribí tus ingredientes"
                 description="ingresá lo que tenés en casa"
               />
-              <Step 
+              <Step
                 number="2"
                 title="Recibí tus recetas"
                 description="la IA te genera opciones reconfortantes en segundos"
               />
-              <Step 
+              <Step
                 number="3"
                 title="Organizá tu semana"
                 description="creá tu menú y planner con un toque"
@@ -148,7 +142,6 @@ export default function App() {
             </div>
           </section>
 
-          {/* Benefits */}
           <section className="px-6 py-20">
             <h2 className="font-serif text-3xl mb-10">Lo que vas a lograr</h2>
             <div className="space-y-6">
@@ -169,22 +162,21 @@ export default function App() {
             </div>
           </section>
 
-          {/* Testimonials */}
           <section className="px-6 py-16 bg-secondary/10 overflow-hidden w-full box-border">
             <h2 className="font-serif text-3xl mb-10">Miles de familias cocinando con más calma</h2>
-            
+
             <div className="flex flex-col gap-4 w-full">
-              <Testimonial 
+              <Testimonial
                 quote="Desde que uso Recetario de la Paz, el momento 'qué comemos hoy' ya no me genera ansiedad. Es como tener una amiga que sabe cocinar."
                 author="Valentina M."
                 location="Buenos Aires"
               />
-              <Testimonial 
+              <Testimonial
                 quote="Ahorré como $15,000 al mes en delivery solo con el planner semanal. No lo puedo creer."
                 author="Martín R."
                 location="Córdoba"
               />
-              <Testimonial 
+              <Testimonial
                 quote="Mis hijos comen más variado y yo me siento más organizada. Por fin una app que entiende la vida real."
                 author="Lucía G."
                 location="Rosario"
@@ -192,11 +184,10 @@ export default function App() {
             </div>
           </section>
 
-          {/* Premium CTA */}
           <section className="px-6 py-20">
             <div className="bg-primary text-primary-foreground p-8 rounded-3xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-              
+
               <div className="relative z-10">
                 <h2 className="font-serif text-2xl mb-3">¿Querés Premium?</h2>
 
@@ -211,13 +202,8 @@ export default function App() {
                 <p className="text-primary-foreground/80 mb-8 leading-relaxed">
                   Escribinos por WhatsApp y te activamos el acceso al instante: recetas ilimitadas, menú personalizado y planner completo.
                 </p>
-                
-                
-                  href={WHATSAPP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
+
+                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="block">
                   <Button className="w-full h-12 rounded-xl bg-white text-primary hover:bg-white/90 shadow-sm">
                     Escribir por WhatsApp
                   </Button>
@@ -226,7 +212,6 @@ export default function App() {
             </div>
           </section>
 
-          {/* FAQ */}
           <section className="px-6 py-10">
             <h2 className="font-serif text-3xl mb-8">Preguntas frecuentes</h2>
             <Accordion type="single" collapsible className="w-full">
@@ -268,7 +253,7 @@ export default function App() {
 
 function SolutionCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ y: -2 }}
       className="bg-white p-6 rounded-3xl border border-primary/10 shadow-sm flex flex-col gap-4 relative overflow-hidden group"
     >
