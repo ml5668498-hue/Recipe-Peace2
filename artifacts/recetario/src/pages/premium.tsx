@@ -8,6 +8,7 @@ import {
   PiggyBank,
   Target,
   MessageCircle,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -108,6 +109,26 @@ export default function Premium() {
                 </div>
               </motion.div>
             ))}
+          </motion.div>
+
+          {/* Price */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.4 }}
+            className="bg-card border border-border/60 rounded-2xl p-6 shadow-sm mb-4"
+          >
+            <div className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-[11px] font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
+              <Star size={9} fill="currentColor" />
+              Oferta de lanzamiento
+            </div>
+            <div className="flex items-baseline gap-3">
+              <div>
+                <span className="font-serif text-4xl text-foreground font-medium">$4.990</span>
+                <span className="text-sm text-muted-foreground ml-2">ARS / mes</span>
+              </div>
+              <span className="text-lg text-muted-foreground/60 line-through font-serif">$9.990</span>
+            </div>
           </motion.div>
 
           {/* WhatsApp activation */}
