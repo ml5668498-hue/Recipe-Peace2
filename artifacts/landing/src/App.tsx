@@ -192,7 +192,7 @@ export default function App() {
             </div>
           </section>
 
-          {/* Premium CTA */}
+{/* Premium CTA */}
           <section className="px-6 py-20">
             <div className="bg-primary text-primary-foreground p-8 rounded-3xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
@@ -216,7 +216,7 @@ export default function App() {
               </div>
             </div>
           </section>
-
+        
           {/* FAQ */}
           <section className="px-6 py-10">
             <h2 className="font-serif text-3xl mb-8">Preguntas frecuentes</h2>
