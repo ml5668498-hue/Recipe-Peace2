@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Heart, Sparkles, Calendar as CalendarIcon, Clock, ChevronDown, CheckCircle2, ChevronRight, Leaf, Salad } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { z } from "zod";
+
+const APP_URL = "https://recetario-de-la-paz.onrender.com";
 
 export default function App() {
   const { toast } = useToast();
@@ -119,7 +120,7 @@ export default function App() {
               </p>
               <div className="flex flex-col gap-4">
                 <Button asChild size="lg" className="h-14 rounded-2xl text-base shadow-sm hover:shadow-md transition-all">
-                  <Link href="/">Probar gratis</Link>
+                  <a href={APP_URL}>Probar gratis</a>
                 </Button>
                 <Button variant="ghost" size="lg" className="h-14 rounded-2xl text-base" onClick={scrollToHowItWorks}>
                   Ver cómo funciona <ChevronDown className="w-4 h-4 ml-2 opacity-50" />
@@ -328,7 +329,7 @@ export default function App() {
           </div>
           <h3 className="font-serif text-xl mb-6">Recetario de la Paz<br/><span className="text-white/60 text-lg">Cocina con calma</span></h3>
           <Button asChild variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-xl h-12 px-8 mb-12">
-            <Link href="/">Abrir la app</Link>
+            <a href={APP_URL}>Abrir la app</a>
           </Button>
           <p className="text-sm text-white/40">Hecho con amor en Argentina</p>
         </footer>
