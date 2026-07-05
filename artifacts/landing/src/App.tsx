@@ -1,83 +1,14 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Sparkles, Calendar as CalendarIcon, Clock, ChevronDown, CheckCircle2, ChevronRight, Leaf, Salad } from "lucide-react";
+import { Heart, Sparkles, Calendar as CalendarIcon, ChevronDown, CheckCircle2, Leaf, Salad } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { z } from "zod";
 
 const APP_URL = "https://recetario-de-la-paz.onrender.com";
+const WHATSAPP_URL =
+  "https://wa.me/549344618166?text=" +
+  encodeURIComponent("Hola! Quiero activar mi cuenta Premium de Recetario de la Paz 🙌");
 
 export default function App() {
-  const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleWaitlist = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!name || !email) {
-      toast({
-        title: "Completa los campos",
-        description: "Por favor, ingresa tu nombre y email para unirte.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const emailSchema = z.string().email();
-    if (!emailSchema.safeParse(email).success) {
-      toast({
-        title: "Email inválido",
-        description: "Por favor, ingresa una dirección de email válida.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
-      });
-
-      if (res.ok) {
-        toast({
-          title: "¡Estás en la lista!",
-          description: "Te avisaremos cuando Premium esté disponible.",
-        });
-        setName("");
-        setEmail("");
-      } else {
-        const body = await res.json().catch(() => ({}));
-        if (res.status === 409) {
-          toast({
-            title: "Ya estás en la lista",
-            description: "Este email ya está registrado. ¡Te avisaremos pronto!",
-          });
-        } else {
-          toast({
-            title: "Error al registrarse",
-            description: body.error ?? "Intenta de nuevo en un momento.",
-            variant: "destructive",
-          });
-        }
-      }
-    } catch {
-      toast({
-        title: "Error de conexión",
-        description: "No se pudo conectar. Intenta de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const scrollToHowItWorks = () => {
     const el = document.getElementById("how-it-works");
     if (el) {
@@ -261,39 +192,27 @@ export default function App() {
             </div>
           </section>
 
-          {/* Waitlist */}
+          {/* Premium CTA */}
           <section className="px-6 py-20">
             <div className="bg-primary text-primary-foreground p-8 rounded-3xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
               
               <div className="relative z-10">
-                <h2 className="font-serif text-2xl mb-3">Únete a la lista de espera Premium</h2>
+                <h2 className="font-serif text-2xl mb-3">¿Querés Premium?</h2>
                 <p className="text-primary-foreground/80 mb-8 leading-relaxed">
-                  Sé de los primeros en acceder a funciones exclusivas, recetas ilimitadas y personalización total.
+                  Escribinos por WhatsApp y te activamos el acceso al instante: recetas ilimitadas, menú personalizado y planner completo.
                 </p>
                 
-                <form onSubmit={handleWaitlist} className="space-y-4">
-                  <Input 
-                    placeholder="Tu nombre" 
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 rounded-xl focus-visible:ring-white/30"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                  />
-                  <Input 
-                    type="email"
-                    placeholder="tu@email.com" 
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 rounded-xl focus-visible:ring-white/30"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="w-full h-12 rounded-xl bg-white text-primary hover:bg-white/90 shadow-sm mt-2"
-                  >
-                    {isSubmitting ? "Uniendo..." : "Unirme a la lista"}
+                
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button className="w-full h-12 rounded-xl bg-white text-primary hover:bg-white/90 shadow-sm">
+                    Escribir por WhatsApp
                   </Button>
-                </form>
+                </a>
               </div>
             </div>
           </section>
@@ -307,7 +226,7 @@ export default function App() {
                 { q: "¿Necesito crear una cuenta?", a: "No. La app funciona sin registro. Tus recetas se guardan en tu dispositivo." },
                 { q: "¿Funciona sin internet?", a: "Necesitás conexión para generar recetas con IA. Tus favoritos guardados funcionan sin internet." },
                 { q: "¿En qué países está disponible?", a: "Está disponible en toda Latinoamérica y España." },
-                { q: "¿Cuándo llega Premium?", a: "Estamos trabajando en ello. Anotate en la lista de espera y te avisamos primero." },
+                { q: "¿Cuándo llega Premium?", a: "Ya está disponible. Escribinos por WhatsApp y te activamos el acceso." },
               ].map((faq, i) => (
                 <AccordionItem key={i} value={`item-${i}`} className="border-b-primary/10">
                   <AccordionTrigger className="font-serif text-left text-[1.1rem] hover:no-underline py-5 text-foreground/80 hover:text-foreground">
