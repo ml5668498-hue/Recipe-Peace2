@@ -192,13 +192,22 @@ export default function App() {
             </div>
           </section>
 
-{/* Premium CTA */}
+          {/* Premium CTA */}
           <section className="px-6 py-20">
             <div className="bg-primary text-primary-foreground p-8 rounded-3xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
               
               <div className="relative z-10">
                 <h2 className="font-serif text-2xl mb-3">¿Querés Premium?</h2>
+
+                <div className="flex items-baseline gap-3 mb-4">
+                  <div>
+                    <span className="font-serif text-3xl font-medium">$4.990</span>
+                    <span className="text-sm text-primary-foreground/70 ml-2">ARS / mes</span>
+                  </div>
+                  <span className="text-base text-primary-foreground/50 line-through font-serif">$9.990</span>
+                </div>
+
                 <p className="text-primary-foreground/80 mb-8 leading-relaxed">
                   Escribinos por WhatsApp y te activamos el acceso al instante: recetas ilimitadas, menú personalizado y planner completo.
                 </p>
@@ -216,7 +225,7 @@ export default function App() {
               </div>
             </div>
           </section>
-        
+
           {/* FAQ */}
           <section className="px-6 py-10">
             <h2 className="font-serif text-3xl mb-8">Preguntas frecuentes</h2>
