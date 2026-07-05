@@ -1,4 +1,4 @@
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Leaf,
@@ -15,9 +15,14 @@ import {
   History,
   Sparkles,
   ChevronRight,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
+
+const WHATSAPP_URL =
+  "https://wa.me/549344618166?text=" +
+  encodeURIComponent("Hola! Quiero activar mi cuenta Premium de Recetario de la Paz 🙌");
 
 const FEATURES = [
   "Generador de recetas con IA personalizada",
@@ -123,25 +128,20 @@ export default function Subscribe() {
           </div>
         </div>
 
-        {/* Coming soon state */}
-        <div className="bg-muted/60 rounded-2xl p-4 text-center">
+        {/* Activation via WhatsApp */}
+        <div className="bg-muted/60 rounded-2xl p-4 text-center flex flex-col items-center gap-2">
+          <MessageCircle size={18} className="text-primary" strokeWidth={1.5} />
           <p className="text-sm text-muted-foreground leading-relaxed">
-            <span className="font-medium text-foreground">Pagos próximamente.</span>
-            {" "}Estamos integrando Mercado Pago. Te avisaremos cuando esté disponible.
+            <span className="font-medium text-foreground">Activación por WhatsApp.</span>
+            {" "}Te confirmamos el pago y activamos tu cuenta al instante.
           </p>
         </div>
 
-        <Link href="/premium" className="w-full">
-          {isExpired ? (
-            <Button className="w-full h-12 rounded-xl">
-              Activar Premium
-            </Button>
-          ) : (
-            <Button className="w-full h-12 rounded-xl">
-              Anotarme para Premium
-            </Button>
-          )}
-        </Link>
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="w-full">
+          <Button className="w-full h-12 rounded-xl">
+            {isExpired ? "Activar Premium por WhatsApp" : "Activar Premium por WhatsApp"}
+          </Button>
+        </a>
 
         {/* Locked features — shown to trial users */}
         {!isExpired && (
@@ -158,14 +158,9 @@ export default function Subscribe() {
 
             <div className="divide-y divide-border/30">
               {LOCKED_FEATURES.map(({ icon: Icon, label, desc }) => (
-                <button
+                <div
                   key={label}
-                  type="button"
-                  onClick={() => {
-                    console.log("[Premium] locked feature clicked:", label);
-                    setLocation("/premium");
-                  }}
-                  className="w-full flex items-center gap-4 px-5 py-3.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-4 px-5 py-3.5 text-left"
                 >
                   <div className="w-8 h-8 rounded-full bg-muted/50 text-muted-foreground flex items-center justify-center shrink-0">
                     <Lock size={13} strokeWidth={1.5} />
@@ -175,17 +170,17 @@ export default function Subscribe() {
                     <p className="text-xs text-muted-foreground/80 mt-0.5 leading-snug">{desc}</p>
                   </div>
                   <ChevronRight size={14} className="text-muted-foreground/50 shrink-0" />
-                </button>
+                </div>
               ))}
             </div>
 
             <div className="px-5 py-4 border-t border-border/40 bg-primary/3">
-              <Link href="/premium" className="w-full">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="w-full block">
                 <Button className="w-full h-11 rounded-xl text-sm font-semibold bg-primary text-primary-foreground">
                   <Lock size={14} className="mr-2" />
                   Desbloquear Premium
                 </Button>
-              </Link>
+              </a>
             </div>
           </motion.div>
         )}
