@@ -21,6 +21,7 @@ import type {
 
 import type {
   ApiError,
+  CheckoutResponse,
   HealthStatus,
   MenuInput,
   MenuResult,
@@ -118,6 +119,76 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
+
+export const getCreateSubscriptionCheckoutUrl = () => {
+
+
+
+
+  return `/api/subscriptions/checkout`
+}
+
+/**
+ * @summary Create a Mercado Pago Premium subscription checkout
+ */
+export const createSubscriptionCheckout = async ( options?: RequestInit): Promise<CheckoutResponse> => {
+
+  return customFetch<CheckoutResponse>(getCreateSubscriptionCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getCreateSubscriptionCheckoutMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubscriptionCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSubscriptionCheckout>>, TError,void, TContext> => {
+
+const mutationKey = ['createSubscriptionCheckout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSubscriptionCheckout>>, void> = () => {
+
+
+          return  createSubscriptionCheckout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSubscriptionCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof createSubscriptionCheckout>>>
+
+    export type CreateSubscriptionCheckoutMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Create a Mercado Pago Premium subscription checkout
+ */
+export const useCreateSubscriptionCheckout = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubscriptionCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSubscriptionCheckout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateSubscriptionCheckoutMutationOptions(options));
+    }
 
 export const getGenerateRecipesUrl = () => {
 

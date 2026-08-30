@@ -13,6 +13,10 @@ export interface ApiError {
   error: string;
 }
 
+export interface CheckoutResponse {
+  init_point: string;
+}
+
 export type RecipeDifficulty = typeof RecipeDifficulty[keyof typeof RecipeDifficulty];
 
 

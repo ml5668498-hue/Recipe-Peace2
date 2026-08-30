@@ -7,6 +7,7 @@
  */
 
 export * from './apiError';
+export * from './checkoutResponse';
 export * from './dayMenu';
 export * from './dayPlanner';
 export * from './healthStatus';

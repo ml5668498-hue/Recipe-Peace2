@@ -1,4 +1,5 @@
-import { useLocation } from "wouter";
+import { useState } from "react";
+import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   Leaf,
@@ -15,14 +16,11 @@ import {
   History,
   Sparkles,
   ChevronRight,
-  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
 
-const WHATSAPP_URL =
-  "https://wa.me/549344618166?text=" +
-  encodeURIComponent("Hola! Quiero activar mi cuenta Premium de Recetario de la Paz 🙌");
+const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
 const FEATURES = [
   "Generador de recetas con IA personalizada",
@@ -41,14 +39,50 @@ const LOCKED_FEATURES = [
 ];
 
 export default function Subscribe() {
-  const { user, subscription, trialDaysLeft, logout } = useAuth();
+  const { user, subscription, trialDaysLeft, logout, token } = useAuth();
   const [, setLocation] = useLocation();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const isExpired = subscription?.subscription_status === "expired";
 
   const handleLogout = () => {
     logout();
     setLocation("/login");
+  };
+
+  const handleCheckout = async () => {
+    if (!token) {
+      setCheckoutError("Iniciá sesión para activar Premium.");
+      return;
+    }
+
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+
+    try {
+      const res = await fetch(`${BASE}/api/subscriptions/checkout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        init_point?: string;
+        error?: string;
+      };
+
+      if (!res.ok || !data.init_point) {
+        throw new Error(data.error ?? "No se pudo iniciar el pago.");
+      }
+
+      window.location.assign(data.init_point);
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error
+          ? err.message
+          : "No se pudo iniciar el pago. Intentá de nuevo.",
+      );
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -112,7 +146,7 @@ export default function Subscribe() {
           {/* Price row */}
           <div className="flex items-baseline gap-3 mb-5">
             <div>
-              <span className="font-serif text-4xl text-foreground font-medium">$4.990</span>
+              <span className="font-serif text-4xl text-foreground font-medium">$7.000</span>
               <span className="text-sm text-muted-foreground ml-2">ARS / mes</span>
             </div>
             <span className="text-lg text-muted-foreground/60 line-through font-serif">$9.990</span>
@@ -128,20 +162,28 @@ export default function Subscribe() {
           </div>
         </div>
 
-        {/* Activation via WhatsApp */}
-        <div className="bg-muted/60 rounded-2xl p-4 text-center flex flex-col items-center gap-2">
-          <MessageCircle size={18} className="text-primary" strokeWidth={1.5} />
+        {/* Payment information */}
+        <div className="bg-muted/60 rounded-2xl p-4 text-center">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            <span className="font-medium text-foreground">Activación por WhatsApp.</span>
-            {" "}Te confirmamos el pago y activamos tu cuenta al instante.
+            <span className="font-medium text-foreground">Pago seguro con Mercado Pago.</span>
+            {" "}La suscripción se renueva mensualmente.
           </p>
         </div>
 
-        <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="w-full">
-          <Button className="w-full h-12 rounded-xl">
-            {isExpired ? "Activar Premium por WhatsApp" : "Activar Premium por WhatsApp"}
-          </Button>
-        </a>
+        <Button
+          type="button"
+          onClick={handleCheckout}
+          disabled={checkoutLoading}
+          className="w-full h-12 rounded-xl"
+        >
+          {checkoutLoading ? "Abriendo Mercado Pago..." : "Activar Premium"}
+        </Button>
+
+        {checkoutError && (
+          <p className="text-sm text-destructive text-center -mt-2">
+            {checkoutError}
+          </p>
+        )}
 
         {/* Locked features — shown to trial users */}
         {!isExpired && (
@@ -158,9 +200,14 @@ export default function Subscribe() {
 
             <div className="divide-y divide-border/30">
               {LOCKED_FEATURES.map(({ icon: Icon, label, desc }) => (
-                <div
+                <button
                   key={label}
-                  className="w-full flex items-center gap-4 px-5 py-3.5 text-left"
+                  type="button"
+                  onClick={() => {
+                    console.log("[Premium] locked feature clicked:", label);
+                    setLocation("/premium");
+                  }}
+                  className="w-full flex items-center gap-4 px-5 py-3.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-muted/50 text-muted-foreground flex items-center justify-center shrink-0">
                     <Lock size={13} strokeWidth={1.5} />
@@ -170,17 +217,17 @@ export default function Subscribe() {
                     <p className="text-xs text-muted-foreground/80 mt-0.5 leading-snug">{desc}</p>
                   </div>
                   <ChevronRight size={14} className="text-muted-foreground/50 shrink-0" />
-                </div>
+                </button>
               ))}
             </div>
 
             <div className="px-5 py-4 border-t border-border/40 bg-primary/3">
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="w-full block">
+              <Link href="/premium" className="w-full">
                 <Button className="w-full h-11 rounded-xl text-sm font-semibold bg-primary text-primary-foreground">
                   <Lock size={14} className="mr-2" />
                   Desbloquear Premium
                 </Button>
-              </a>
+              </Link>
             </div>
           </motion.div>
         )}

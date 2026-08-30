@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: subscriptions
+    description: Premium subscription operations
   - name: recipes
     description: Recipe generation
   - name: menu
@@ -28,6 +30,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /subscriptions/checkout:
+    post:
+      operationId: createSubscriptionCheckout
+      tags: [subscriptions]
+      summary: Create a Mercado Pago Premium subscription checkout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Mercado Pago checkout URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Mercado Pago error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "503":
+          description: Mercado Pago is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 
   /recipes/generate:
     post:
@@ -123,6 +158,12 @@ paths:
                 $ref: "#/components/schemas/ApiError"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -139,6 +180,15 @@ components:
           type: string
       required:
         - error
+
+    CheckoutResponse:
+      type: object
+      properties:
+        init_point:
+          type: string
+          format: uri
+      required:
+        - init_point
 
     Recipe:
       type: object

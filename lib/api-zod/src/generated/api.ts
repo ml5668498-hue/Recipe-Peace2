@@ -17,6 +17,14 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * @summary Create a Mercado Pago Premium subscription checkout
+ */
+export const CreateSubscriptionCheckoutResponse = zod.object({
+  "init_point": zod.string().url()
+})
+
+
+/**
  * @summary Generate 3 recipes from available ingredients
  */
 
