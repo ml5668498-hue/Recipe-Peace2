@@ -89,6 +89,10 @@ router.post("/subscriptions/checkout", requireAuth, async (req, res): Promise<vo
       frequency_type: "months",
       transaction_amount: PREMIUM_AMOUNT_ARS,
       currency_id: "ARS",
+      free_trial: {
+        frequency: 14,
+        frequency_type: "days",
+      },
     },
     back_url: backUrl,
   };
