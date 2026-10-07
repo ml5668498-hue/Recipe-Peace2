@@ -188,7 +188,7 @@ export default function Recipes() {
                 ))}
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <Link href="/premium">
+                <Link href="/upgrade">
                   <button className="flex items-center gap-2 bg-card border border-primary/30 text-primary text-xs font-medium px-4 py-2 rounded-xl shadow-sm hover:bg-primary/5 transition-colors">
                     <Lock size={11} strokeWidth={2} />
                     Disponible en Premium
@@ -233,7 +233,7 @@ export default function Recipes() {
                 </Link>
               )}
               {errorMessage.includes("Premium") && (
-                <Link href="/premium">
+                <Link href="/upgrade">
                   <button className="text-xs text-destructive underline mt-1">
                     Ver planes Premium
                   </button>

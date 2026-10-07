@@ -5,7 +5,7 @@ import { computeStatus, trialDaysLeft } from "../../middleware/requireSubscripti
 
 const router = Router();
 const MP_API = "https://api.mercadopago.com";
-const PREMIUM_AMOUNT_ARS = 7000;
+const PREMIUM_AMOUNT_ARS = 7600;
 
 function getAppBaseUrl(req: Request): string {
   const configuredUrl = process.env["APP_BASE_URL"]?.trim();
@@ -90,7 +90,7 @@ router.post("/subscriptions/checkout", requireAuth, async (req, res): Promise<vo
       transaction_amount: PREMIUM_AMOUNT_ARS,
       currency_id: "ARS",
       free_trial: {
-        frequency: 14,
+        frequency: 1,
         frequency_type: "days",
       },
     },

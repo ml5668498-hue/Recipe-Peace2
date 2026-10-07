@@ -114,7 +114,7 @@ export default function Home() {
                   <p className="text-sm text-foreground/80 leading-relaxed mb-3">
                     Podés generar recetas y menús. Funciones Premium disponibles al actualizar.
                   </p>
-                  <Link href="/premium">
+                  <Link href="/upgrade">
                     <button className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 transition-colors px-4 py-2 rounded-xl border border-primary/20">
                       <Lock size={14} strokeWidth={2} />
                       Ver funciones Premium
@@ -277,7 +277,7 @@ export default function Home() {
             {/* CTA for non-premium */}
             {!isPremium && (
               <div className="px-5 py-4 border-t border-border/40 bg-muted/10">
-                <Link href="/premium">
+                <Link href="/upgrade">
                   <button className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-medium h-12 rounded-xl hover:bg-primary/90 transition-colors">
                     <Crown size={15} />
                     Desbloquear todas las funciones

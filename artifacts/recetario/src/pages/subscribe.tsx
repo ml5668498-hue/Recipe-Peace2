@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Leaf,
@@ -53,7 +53,7 @@ export default function Subscribe() {
 
   const handleCheckout = async () => {
     if (!token) {
-      setCheckoutError("Iniciá sesión para activar Premium.");
+      setLocation("/login");
       return;
     }
 
@@ -146,7 +146,7 @@ export default function Subscribe() {
           {/* Price row */}
           <div className="flex items-baseline gap-3 mb-5">
             <div>
-              <span className="font-serif text-4xl text-foreground font-medium">$7.000</span>
+              <span className="font-serif text-4xl text-foreground font-medium">$7.600</span>
               <span className="text-sm text-muted-foreground ml-2">ARS / mes</span>
             </div>
             <span className="text-lg text-muted-foreground/60 line-through font-serif">$9.990</span>
@@ -205,7 +205,7 @@ export default function Subscribe() {
                   type="button"
                   onClick={() => {
                     console.log("[Premium] locked feature clicked:", label);
-                    setLocation("/premium");
+                    setLocation("/upgrade");
                   }}
                   className="w-full flex items-center gap-4 px-5 py-3.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors cursor-pointer"
                 >
@@ -222,12 +222,15 @@ export default function Subscribe() {
             </div>
 
             <div className="px-5 py-4 border-t border-border/40 bg-primary/3">
-              <Link href="/premium" className="w-full">
-                <Button className="w-full h-11 rounded-xl text-sm font-semibold bg-primary text-primary-foreground">
-                  <Lock size={14} className="mr-2" />
-                  Desbloquear Premium
-                </Button>
-              </Link>
+              <Button
+                type="button"
+                onClick={handleCheckout}
+                disabled={checkoutLoading}
+                className="w-full h-11 rounded-xl text-sm font-semibold bg-primary text-primary-foreground"
+              >
+                <Lock size={14} className="mr-2" />
+                {checkoutLoading ? "Abriendo Mercado Pago..." : "Desbloquear Premium"}
+              </Button>
             </div>
           </motion.div>
         )}

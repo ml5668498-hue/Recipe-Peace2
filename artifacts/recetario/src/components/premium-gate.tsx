@@ -29,7 +29,7 @@ export function PremiumGate({
             <p className={`font-medium text-foreground ${compact ? "text-sm" : "text-base"}`}>{message}</p>
             <p className="text-xs text-muted-foreground mt-1">Disponible en Premium</p>
           </div>
-          <Link href="/premium">
+          <Link href="/upgrade">
             <button className={`flex items-center gap-2 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors ${compact ? "text-xs px-4 py-2" : "text-sm px-6 py-3"}`}>
               <Crown size={compact ? 12 : 15} />
               Ver plan Premium

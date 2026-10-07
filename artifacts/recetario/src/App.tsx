@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Redirect, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +10,6 @@ import Menu from "@/pages/menu";
 import Planner from "@/pages/planner";
 import MyRecetario from "@/pages/my-recetario";
 import Welcome from "@/pages/welcome";
-import Premium from "@/pages/premium";
 import AdminWaitlist from "@/pages/admin-waitlist";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -48,7 +47,9 @@ function AppRoutes() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/upgrade" component={Subscribe} />
-      <Route path="/premium" component={Premium} />
+      <Route path="/premium">
+        <Redirect to="/upgrade" />
+      </Route>
       <Route path="/admin" component={AdminWaitlist} />
 
       {/* Protected routes */}
